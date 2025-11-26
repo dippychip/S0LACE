@@ -157,3 +157,75 @@ footer a:hover {
 .credit input:checked ~ pre {
 	display: block;
 }
+
+/* ------------------------------------------------------------------ */
+/* GLOBAL LIGHT THEME OVERRIDES FOR HUB PAGES                         */
+/* These work when JS adds `body.theme-light` (from global-hub.js).   */
+/* ------------------------------------------------------------------ */
+
+body.theme-light {
+	background: #f3f4f6;
+	color: #020617;
+}
+
+/* Header + nav shared across pages (index/games/player/chat/settings) */
+body.theme-light .site-header {
+	background: rgba(249, 250, 251, 0.9);
+	border-bottom: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+body.theme-light .site-title span {
+	color: #6b7280;
+}
+
+body.theme-light .site-nav a {
+	color: #4b5563;
+}
+
+body.theme-light .site-nav a.active {
+	background: rgba(37, 99, 235, 0.12);
+	border-color: rgba(59, 130, 246, 0.9);
+	color: #111827;
+}
+
+/* Settings page blocks */
+body.theme-light .settings-group {
+	background: #ffffff;
+	border-color: rgba(148, 163, 184, 0.6);
+}
+
+body.theme-light .settings-row input[type="text"],
+body.theme-light .settings-row input[type="url"],
+body.theme-light .settings-row select {
+	background: #f9fafb;
+	color: #111827;
+	border-color: rgba(148, 163, 184, 0.9);
+}
+
+body.theme-light .settings-row input::placeholder {
+	color: #9ca3af;
+}
+
+body.theme-light .btn-pill {
+	color: #374151;
+	border-color: rgba(148, 163, 184, 0.9);
+}
+
+body.theme-light .btn-pill.primary {
+	background: rgba(37, 99, 235, 0.12);
+	color: #1f2937;
+}
+
+body.theme-light .theme-toggle {
+	background: #f9fafb;
+	border-color: rgba(148, 163, 184, 0.9);
+}
+
+body.theme-light .theme-toggle button {
+	color: #4b5563;
+}
+
+body.theme-light .theme-toggle button.active {
+	background: rgba(37, 99, 235, 0.16);
+	color: #111827;
+}
