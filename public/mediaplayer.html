@@ -10,14 +10,6 @@
 
     <link rel="shortcut icon" content="favicon.webp" />
     <link rel="stylesheet" href="index.css" />
-
-    <!-- Scramjet core + BareMux + Epoxy + SW registration -->
-    <script src="/scram/scramjet.all.js"></script>
-    <script src="baremux/index.js" defer></script>
-    <script src="epoxy/index.js" defer></script>
-    <script src="register-sw.js" defer></script>
-
-    <!-- Global hub logic (theme, tab cloak, etc.) -->
     <script src="global-hub.js" defer></script>
 
     <style>
@@ -194,10 +186,9 @@
         S0LACE <span>player</span>
       </div>
       <nav class="site-nav">
-        <a href="index.html">Home</a>
+        <a href="index.html">Proxy</a>
         <a href="games.html">Games</a>
         <a href="media.html" class="active">Media</a>
-        <a href="apps.html">Apps</a>
         <a href="settings.html">Settings</a>
       </nav>
     </header>
@@ -240,7 +231,8 @@
 
       let originalSrc = null;
 
-      // We assume srcParam is ALREADY proxied (e.g. /scram/https://...)
+      // We assume srcParam is already something like:
+      //   /scram/https://example.com/whatever
       if (srcParam) {
         originalSrc = decodeURIComponent(srcParam);
         const title = titleParam ? decodeURIComponent(titleParam) : originalSrc;
@@ -259,7 +251,7 @@
         frame.src = originalSrc;
       });
 
-      // -------- Fullscreen handling --------
+      // ---------- Fullscreen handling ----------
       function isFullscreen() {
         return !!(
           document.fullscreenElement ||
@@ -294,7 +286,9 @@
       });
 
       function updateFsLabel() {
-        fullscreenBtn.textContent = isFullscreen() ? "Exit Fullscreen" : "Fullscreen";
+        fullscreenBtn.textContent = isFullscreen()
+          ? "Exit Fullscreen"
+          : "Fullscreen";
       }
 
       document.addEventListener("fullscreenchange", updateFsLabel);
