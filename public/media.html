@@ -243,19 +243,22 @@
       <!-- GRID -->
       <div class="media-grid" id="media-grid">
         <!-- data-title = used for search
-             data-src   = iframe URL to load in media-player.html -->
+             data-src   = URL that will be loaded in mediaplayer.html (can be /scram/...) -->
         <a
           class="media-card"
-         href="#"
-         data-title="Interstellar"
-         data-src="/scram/https://cinemaos.tech/player/157336"
+          href="#"
+          data-title="interstellar"
+          data-src="/scram/https://cinemaos.tech/player/157336"
         >
-         <div class="media-poster">
-         <img src="https://image.tmdb.org/t/p/w600_and_h900_face/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" alt="Interstellar" />
-         <div class="media-overlay">Interstellar</div>
-       </div>
-      </a>
-
+          <div class="media-poster">
+            <!-- You can swap this to a local image like posters/interstellar.jpg -->
+            <img
+              src="https://image.tmdb.org/t/p/w600_and_h900_face/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg"
+              alt="Interstellar"
+            />
+            <div class="media-overlay">Interstellar</div>
+          </div>
+        </a>
 
         <!-- add more media-card blocks here -->
       </div>
