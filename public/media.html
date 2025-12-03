@@ -243,7 +243,7 @@
       <!-- GRID -->
       <div class="media-grid" id="media-grid">
         <!-- data-title = used for search
-             data-src   = URL that will be loaded in mediaplayer.html (can be /scram/...) -->
+             data-src   = URL that will be opened directly (e.g. /scramjet/https://...) -->
         <a
           class="media-card"
           href="#"
@@ -251,7 +251,6 @@
           data-src="/scramjet/https://cinemaos.tech/player/157336"
         >
           <div class="media-poster">
-            <!-- You can swap this to a local image like posters/interstellar.jpg -->
             <img
               src="https://image.tmdb.org/t/p/w600_and_h900_face/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg"
               alt="Interstellar"
@@ -295,20 +294,10 @@
         card.addEventListener("click", (e) => {
           e.preventDefault();
           const src = card.dataset.src;
-          const title =
-            card.querySelector(".media-overlay")?.textContent ||
-            card.dataset.title ||
-            "Untitled";
-
           if (!src) return;
 
-          const url =
-            "mediaplayer.html?src=" +
-            encodeURIComponent(src) +
-            "&title=" +
-            encodeURIComponent(title);
-
-          window.location.href = url;
+          // Go straight to the proxied URL (no mediaplayer.html)
+          window.location.href = src;
         });
       });
 
