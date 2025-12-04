@@ -6,12 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
     />
-    <title>S0LACE • Proxy</title>
+    <title>S0LACE</title>
 
     <link rel="shortcut icon" content="favicon.ico" />
     <link rel="stylesheet" href="index.css" />
 
-    <!-- Scramjet stack (keep these paths matching your working setup) -->
+    <!-- Scramjet stack – keep these paths matching whatever works in your repo -->
     <script src="/scramjet/scramjet.all.js"></script>
     <script src="baremux/index.js" defer></script>
     <script src="epoxy/index.js" defer></script>
@@ -19,6 +19,7 @@
     <script src="search.js" defer></script>
     <script src="index.js" defer></script>
 
+    <!-- global settings / tab cloak -->
     <script src="global-hub.js" defer></script>
   </head>
 
@@ -26,7 +27,7 @@
     <header class="site-header">
       <div class="site-title">
         S0LACE
-        <span>black dungeon // proxy</span>
+        <span>black dungeon // proxy hub</span>
       </div>
       <nav class="site-nav">
         <a href="index.html" class="active">Home</a>
@@ -38,65 +39,188 @@
     </header>
 
     <main>
-      <div class="page-header">
-        <h1>Proxy</h1>
-        <p class="sub">
-          Enter the <span>dungeon gateway</span>. URLs, searches, whatever —
-          the door opens either way.
-        </p>
-      </div>
 
-      <div class="home-layout">
-        <!-- left: MOTD + proxy search -->
-        <section class="home-panel">
-          <div class="motd-label">MESSAGE OF THE DUNGEON (CLICK TO CYCLE)</div>
-          <div id="motd">
-            loading dungeon whispers...
+      <!-- MAIN PROXY BLOCK -->
+      <section class="home-panel home-proxy-panel">
+        <div id="motd">
+          loading
+        </div>
+
+        <div style="margin-top: 14px;">
+          <div class="proxy-label">PR0XY &gt;</div>
+          <form id="sj-form">
+            <input
+              id="sj-search-engine"
+              value="https://www.google.com/search?q=%s"
+              type="hidden"
+            />
+            <input
+              id="sj-address"
+              type="text"
+              placeholder="type a url or search..."
+            />
+            <button class="proxy-btn" type="submit">GO</button>
+          </form>
+          <div id="sj-error"></div>
+          <pre id="sj-error-code"></pre>
+        </div>
+      </section>
+
+      <!-- POPULAR GAMES STRIP -->
+      <section class="home-panel home-popular-panel">
+        <div class="motd-label">POPULAR GAMES</div>
+
+        <div class="popular-wrap">
+          <div class="popular-track">
+            <!-- row 1 -->
+            <a
+              class="popular-pill"
+              href="player.html?game=games/retrobowl/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/retrobowl.png');"
+              ></span>
+              <span class="pill-name">Retro&nbsp;Bowl</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/slope/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/slope.png');"
+              ></span>
+              <span class="pill-name">Slope</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/geometrydash/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/geometrydash.png');"
+              ></span>
+              <span class="pill-name">Geometry&nbsp;Dash</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/monkey-mart/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/monkey-mart.jpeg');"
+              ></span>
+              <span class="pill-name">Monkey&nbsp;Mart</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/level-devil/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/leveldevil.jpeg');"
+              ></span>
+              <span class="pill-name">Level&nbsp;Devil</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/snow-rider/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/snow-rider.jpeg');"
+              ></span>
+              <span class="pill-name">Snow&nbsp;Rider&nbsp;3D</span>
+            </a>
+
+            <!-- duplicate row so it loops clean -->
+            <a
+              class="popular-pill"
+              href="player.html?game=games/retrobowl/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/retrobowl.png');"
+              ></span>
+              <span class="pill-name">Retro&nbsp;Bowl</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/slope/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/slope.png');"
+              ></span>
+              <span class="pill-name">Slope</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/geometrydash/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/geometrydash.png');"
+              ></span>
+              <span class="pill-name">Geometry&nbsp;Dash</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/monkey-mart/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/monkey-mart.jpeg');"
+              ></span>
+              <span class="pill-name">Monkey&nbsp;Mart</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/level-devil/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/leveldevil.jpeg');"
+              ></span>
+              <span class="pill-name">Level&nbsp;Devil</span>
+            </a>
+
+            <a
+              class="popular-pill"
+              href="player.html?game=games/snow-rider/index.html"
+            >
+              <span
+                class="pill-thumb"
+                style="background-image: url('thumbs/snow-rider.jpeg');"
+              ></span>
+              <span class="pill-name">Snow&nbsp;Rider&nbsp;3D</span>
+            </a>
           </div>
-
-          <div style="margin-top: 14px;">
-            <div class="proxy-label">GATEWAY &gt;</div>
-            <form id="sj-form">
-              <input
-                id="sj-search-engine"
-                value="https://www.google.com/search?q=%s"
-                type="hidden"
-              />
-              <input
-                id="sj-address"
-                type="text"
-                placeholder="type a url or search..."
-              />
-              <button class="proxy-btn" type="submit">GO</button>
-            </form>
-            <div id="sj-error"></div>
-            <pre id="sj-error-code"></pre>
-          </div>
-        </section>
-
-        <!-- right: quick links / status -->
-        <section class="home-panel">
-          <div class="motd-label">DUNGEON MAP</div>
-          <ul style="list-style: none; padding-left: 0; font-size: 8px;">
-            <li>▌ <a href="games.html">Games</a> – arcade grid of tiles</li>
-            <li>▌ <a href="media.html">Media</a> – coming soon</li>
-            <li>▌ <a href="apps.html">Apps</a> – tools & toys</li>
-            <li>▌ <a href="settings.html">Settings</a> – cloak & tweaks</li>
-          </ul>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
 
     <script>
-      // simple random message system
+      // random message system
       const motdEl = document.getElementById("motd");
       const lines = [
-        "you feel like something is watching from the tabs bar.",
-        "xp +5: you discovered an unblocked doorway.",
-        "rumor: a secret game lies behind a typo'd url.",
-        "tip: hover tiles in the games dungeon to reveal names.",
-        "note: teachers fear what they cannot see.",
-        "proxy spell: type anything. the dungeon will translate."
+        "do you like the new theme",
+        "why doesnt the media work",
+        "made in school",
+        "i hate adding games",
+        "rip trinity",
+        "jollybaby stickers on top",
+        "go check out aurababy"
       ];
 
       function setRandomMotd() {
