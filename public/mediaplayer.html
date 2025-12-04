@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
     />
-    <title>S0LACE • Media Player</title>
+    <title>S0LACE • Player</title>
 
     <link rel="shortcut icon" content="favicon.ico" />
     <link rel="stylesheet" href="index.css" />
@@ -17,6 +17,7 @@
     <header class="site-header">
       <div class="site-title">
         S0LACE
+        <span>media player</span>
       </div>
       <nav class="site-nav">
         <a href="index.html">Home</a>
@@ -29,98 +30,66 @@
 
     <main class="player-main">
       <div class="player-info">
-        <div class="player-left" id="media-title">Loading media…</div>
+        <div class="player-left">
+          <span id="player-title">Loading media…</span>
+        </div>
         <div class="player-actions">
-          <button type="button" id="reload-btn">↻</button>
-          <button type="button" id="fullscreen-btn">⌞ ⌝ </button>
+          <button id="btn-reload" type="button">RELOAD</button>
+          <button id="btn-full" type="button">FULLSCREEN</button>
+          <a id="btn-open" href="#" target="_blank" rel="noopener noreferrer">
+            OPEN TAB
+          </a>
+          <a href="media.html">BACK</a>
         </div>
       </div>
 
-      <div class="player-frame-wrap" id="frame-wrap">
-        <iframe id="media-frame" allowfullscreen></iframe>
-      </div>
-
-      <div class="no-src" id="no-src-msg" style="display: none;">
-        No media URL provided.<br />
+      <div class="player-frame-wrap">
+        <iframe id="media-frame" src="" allowfullscreen></iframe>
       </div>
     </main>
 
     <script>
-      const params = new URLSearchParams(window.location.search);
-      const srcParam = params.get("src");
-      const titleParam = params.get("title");
+      const params = new URLSearchParams(location.search);
+      const rawSrc = params.get("src") || "";
+      const title = params.get("title") || "Untitled";
 
       const frame = document.getElementById("media-frame");
-      const wrap = document.getElementById("frame-wrap");
-      const noSrc = document.getElementById("no-src-msg");
-      const titleEl = document.getElementById("media-title");
-      const reloadBtn = document.getElementById("reload-btn");
-      const fullscreenBtn = document.getElementById("fullscreen-btn");
+      const titleEl = document.getElementById("player-title");
+      const openLink = document.getElementById("btn-open");
+      const reloadBtn = document.getElementById("btn-reload");
+      const fullBtn = document.getElementById("btn-full");
 
-      let originalSrc = null;
+      titleEl.textContent = title;
 
-      if (srcParam) {
-        originalSrc = decodeURIComponent(srcParam);
-        const title = titleParam
-          ? decodeURIComponent(titleParam)
-          : originalSrc;
-        titleEl.textContent = title;
-        frame.src = originalSrc;
+      if (rawSrc) {
+        // IMPORTANT: rawSrc ALREADY has /scramjet/... from media.html
+        frame.src = rawSrc;
+        if (openLink) openLink.href = rawSrc;
       } else {
-        wrap.style.display = "none";
-        noSrc.style.display = "flex";
-        titleEl.textContent = "No media loaded";
-        reloadBtn.disabled = true;
-        fullscreenBtn.disabled = true;
+        const msg = document.createElement("div");
+        msg.className = "no-src";
+        msg.textContent = "No media source provided. Go back and pick something.";
+        frame.replaceWith(msg);
       }
 
-      reloadBtn.addEventListener("click", () => {
-        if (!originalSrc) return;
-        frame.src = originalSrc;
-      });
-
-      function isFullscreen() {
-        return !!(
-          document.fullscreenElement ||
-          document.webkitFullscreenElement ||
-          document.mozFullScreenElement ||
-          document.msFullscreenElement
-        );
-      }
-
-      function requestFs(el) {
-        if (el.requestFullscreen) return el.requestFullscreen();
-        if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
-        if (el.mozRequestFullScreen) return el.mozRequestFullScreen();
-        if (el.msRequestFullscreen) return el.msRequestFullscreen();
-      }
-
-      function exitFs() {
-        if (document.exitFullscreen) return document.exitFullscreen();
-        if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
-        if (document.mozCancelFullScreen) return document.mozCancelFullScreen();
-        if (document.msExitFullscreen) return document.msExitFullscreen();
-      }
-
-      fullscreenBtn.addEventListener("click", () => {
-        if (!wrap) return;
-        if (!isFullscreen()) {
-          requestFs(wrap);
-        } else {
-          exitFs();
+      reloadBtn?.addEventListener("click", () => {
+        if (!frame) return;
+        try {
+          if (frame.contentWindow) {
+            frame.contentWindow.location.reload();
+          } else {
+            frame.src = frame.src;
+          }
+        } catch {
+          frame.src = frame.src;
         }
       });
 
-      function updateFsLabel() {
-        fullscreenBtn.textContent = isFullscreen()
-          ? "Exit Fullscreen"
-          : "Fullscreen";
-      }
-
-      document.addEventListener("fullscreenchange", updateFsLabel);
-      document.addEventListener("webkitfullscreenchange", updateFsLabel);
-      document.addEventListener("mozfullscreenchange", updateFsLabel);
-      document.addEventListener("MSFullscreenChange", updateFsLabel);
+      fullBtn?.addEventListener("click", () => {
+        if (!frame) return;
+        if (frame.requestFullscreen) frame.requestFullscreen();
+        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+      });
     </script>
   </body>
 </html>
