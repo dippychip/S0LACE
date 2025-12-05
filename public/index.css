@@ -40,3 +40,55 @@
   font-size: 8px !important;
   padding: 4px !important;
 }
+
+/* ============================================================
+   FIXED GAMES PAGE — CLEAN 8 PER ROW, NORMAL SIZED ICONS
+   ============================================================ */
+
+/* force games grid to behave */
+body.games-page .game-grid {
+  display: grid !important;
+  grid-template-columns: repeat(8, 1fr) !important;
+  gap: 14px !important;
+  padding-top: 10px !important;
+}
+
+/* card size normalized */
+body.games-page .game-card {
+  width: 100% !important;
+  max-width: 110px !important;
+  padding: 6px !important;
+  border: 2px solid #262626 !important;
+  background: #080808 !important;
+}
+
+/* perfect square thumbnails */
+body.games-page .game-thumb {
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+body.games-page .game-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  image-rendering: pixelated !important;
+}
+
+/* overlay stays small */
+body.games-page .game-overlay {
+  font-size: 8px !important;
+}
+
+/* ensure header goes back to normal */
+body.games-page .site-header {
+  position: sticky !important;
+  display: flex !important;
+}
+
+/* remove ALL old media queries that were messing it up */
+body.games-page * {
+  max-width: none !important;
+}
