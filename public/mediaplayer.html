@@ -6,28 +6,24 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
     />
-    <title>S0LACE • Player</title>
+    <title>S0LACE • Media Player</title>
 
     <link rel="shortcut icon" content="favicon.ico" />
     <link rel="stylesheet" href="index.css" />
 
-    <!-- Scramjet stack: SAME AS HOME -->
-    <script src="/scram/scramjet.all.js"></script>
+    <!-- global settings / tab cloak -->
+    <script src="global-hub.js" defer></script>
+
+    <!-- Scramjet plumbing (NO index.js here) -->
     <script src="baremux/index.js" defer></script>
     <script src="epoxy/index.js" defer></script>
     <script src="register-sw.js" defer></script>
-    <script src="search.js" defer></script>
-    <script src="index.js" defer></script>
-
-    <!-- global settings / tab cloak -->
-    <script src="global-hub.js" defer></script>
   </head>
 
   <body>
     <header class="site-header">
       <div class="site-title">
         S0LACE
-        <span>media player</span>
       </div>
       <nav class="site-nav">
         <a href="index.html">Home</a>
@@ -40,68 +36,104 @@
 
     <main class="player-main">
       <div class="player-info">
-        <div class="player-left">
-          <span id="player-title">Loading media…</span>
-        </div>
+        <div class="player-left" id="player-title">Loading…</div>
         <div class="player-actions">
-          <button id="btn-reload" type="button">RELOAD</button>
-          <button id="btn-full" type="button">FULLSCREEN</button>
-          <a id="btn-open" href="#" target="_blank" rel="noopener noreferrer">
-            OPEN TAB
-          </a>
-          <a href="media.html">BACK</a>
+          <a id="open-direct" href="#" target="_blank" rel="noreferrer">OPEN RAW</a>
+          <button type="button" id="reload-btn">RELOAD</button>
         </div>
       </div>
 
       <div class="player-frame-wrap">
-        <iframe id="media-frame" src="" allowfullscreen></iframe>
+        <iframe id="media-frame" src="about:blank"></iframe>
+      </div>
+
+      <div class="no-src" id="no-src" style="display:none;">
+        no media source provided.<br />
+        go back and pick something from the media page.
       </div>
     </main>
 
     <script>
-      const params = new URLSearchParams(location.search);
-      const rawSrc = params.get("src") || "";
-      const title = params.get("title") || "Untitled";
-
-      const frame = document.getElementById("media-frame");
-      const titleEl = document.getElementById("player-title");
-      const openLink = document.getElementById("btn-open");
-      const reloadBtn = document.getElementById("btn-reload");
-      const fullBtn = document.getElementById("btn-full");
-
-      titleEl.textContent = title;
-
-      if (rawSrc) {
-        // rawSrc already contains /scramjet/... from media.html
-        frame.src = rawSrc;
-        if (openLink) openLink.href = rawSrc;
-      } else {
-        const msg = document.createElement("div");
-        msg.className = "no-src";
-        msg.textContent = "No media source provided. Go back and pick something.";
-        frame.replaceWith(msg);
+      // --- helpers ---
+      function getParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
       }
 
-      // reload the iframe
-      reloadBtn?.addEventListener("click", () => {
-        if (!frame) return;
+      async function initProxyTransport() {
+        // register service worker (same helper used on main proxy page)
         try {
-          if (frame.contentWindow) {
-            frame.contentWindow.location.reload();
-          } else {
-            frame.src = frame.src;
+          if (typeof registerSW === "function") {
+            await registerSW();
           }
-        } catch {
-          frame.src = frame.src;
+        } catch (err) {
+          console.error("SW registration failed in mediaplayer:", err);
         }
-      });
 
-      // fullscreen toggle
-      fullBtn?.addEventListener("click", () => {
-        if (!frame) return;
-        if (frame.requestFullscreen) frame.requestFullscreen();
-        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
-      });
+        // set up BareMux -> Epoxy transport, same idea as index.js but without Scramjet frame
+        if (typeof BareMux === "undefined") {
+          console.warn("BareMux is not available yet");
+          return;
+        }
+
+        const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+        const wispUrl =
+          (location.protocol === "https:" ? "wss" : "ws") +
+          "://" +
+          location.host +
+          "/wisp/";
+
+        try {
+          const current = await connection.getTransport();
+          if (current !== "/epoxy/index.mjs") {
+            await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+          }
+        } catch (err) {
+          console.error("Failed to set BareMux transport in mediaplayer:", err);
+        }
+      }
+
+      async function boot() {
+        const frame = document.getElementById("media-frame");
+        const noSrc = document.getElementById("no-src");
+        const titleEl = document.getElementById("player-title");
+        const openDirect = document.getElementById("open-direct");
+        const reloadBtn = document.getElementById("reload-btn");
+
+        const src = getParam("src");
+        const title = getParam("title") || "Media";
+
+        if (titleEl) titleEl.textContent = title;
+
+        if (!src) {
+          if (frame) frame.style.display = "none";
+          if (noSrc) noSrc.style.display = "flex";
+          if (openDirect) openDirect.style.display = "none";
+          if (reloadBtn) reloadBtn.style.display = "none";
+          return;
+        }
+
+        // set "OPEN RAW" link to the unproxied src for debugging / fallback
+        if (openDirect) {
+          openDirect.href = src;
+        }
+
+        // init BareMux + SW FIRST so we don't hit "no bare clients"
+        await initProxyTransport();
+
+        // now load the proxied URL into iframe
+        if (frame) {
+          frame.src = src;
+        }
+
+        if (reloadBtn) {
+          reloadBtn.addEventListener("click", () => {
+            if (frame) frame.src = frame.src;
+          });
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", boot);
     </script>
   </body>
 </html>
