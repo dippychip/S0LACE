@@ -11,13 +11,14 @@
     <link rel="shortcut icon" content="favicon.ico" />
     <link rel="stylesheet" href="index.css" />
 
-    <!-- global settings / tab cloak -->
-    <script src="global-hub.js" defer></script>
-
-    <!-- Scramjet plumbing (NO index.js here) -->
+    <!-- Scramjet stack -->
+    <script src="/scram/scramjet.all.js"></script>
     <script src="baremux/index.js" defer></script>
     <script src="epoxy/index.js" defer></script>
     <script src="register-sw.js" defer></script>
+
+    <!-- global settings / tab cloak -->
+    <script src="global-hub.js" defer></script>
   </head>
 
   <body>
@@ -43,8 +44,8 @@
         </div>
       </div>
 
-      <div class="player-frame-wrap">
-        <iframe id="media-frame" src="about:blank"></iframe>
+      <div class="player-frame-wrap" id="frame-wrap">
+        <!-- Scramjet will inject its own iframe here -->
       </div>
 
       <div class="no-src" id="no-src" style="display:none;">
@@ -54,14 +55,35 @@
     </main>
 
     <script>
-      // --- helpers ---
       function getParam(name) {
         const params = new URLSearchParams(window.location.search);
         return params.get(name);
       }
 
-      async function initProxyTransport() {
-        // register service worker (same helper used on main proxy page)
+      async function setupScramjetAndPlay() {
+        const src = getParam("src");
+        const title = getParam("title") || "Media";
+
+        const titleEl = document.getElementById("player-title");
+        const openDirect = document.getElementById("open-direct");
+        const reloadBtn = document.getElementById("reload-btn");
+        const wrap = document.getElementById("frame-wrap");
+        const noSrc = document.getElementById("no-src");
+
+        if (titleEl) titleEl.textContent = title;
+
+        if (!src) {
+          if (wrap) wrap.style.display = "none";
+          if (noSrc) noSrc.style.display = "flex";
+          if (openDirect) openDirect.style.display = "none";
+          if (reloadBtn) reloadBtn.style.display = "none";
+          return;
+        }
+
+        // direct link (unproxied) for debugging
+        if (openDirect) openDirect.href = src;
+
+        // --- register service worker ---
         try {
           if (typeof registerSW === "function") {
             await registerSW();
@@ -70,70 +92,74 @@
           console.error("SW registration failed in mediaplayer:", err);
         }
 
-        // set up BareMux -> Epoxy transport, same idea as index.js but without Scramjet frame
+        // --- Scramjet controller ---
+        if (typeof $scramjetLoadController !== "function") {
+          console.error("scramjet.all.js not loaded / $scramjetLoadController missing");
+          return;
+        }
+
+        const { ScramjetController } = $scramjetLoadController();
+
+        const scramjet = new ScramjetController({
+          files: {
+            wasm: "/scram/scramjet.wasm.wasm",
+            all: "/scram/scramjet.all.js",
+            sync: "/scram/scramjet.sync.js",
+          },
+        });
+
+        await scramjet.init();
+
+        // --- BareMux transport (Epoxy) ---
         if (typeof BareMux === "undefined") {
-          console.warn("BareMux is not available yet");
-          return;
-        }
+          console.warn("BareMux is not available in mediaplayer");
+        } else {
+          const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+          const wispUrl =
+            (location.protocol === "https:" ? "wss" : "ws") +
+            "://" +
+            location.host +
+            "/wisp/";
 
-        const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-        const wispUrl =
-          (location.protocol === "https:" ? "wss" : "ws") +
-          "://" +
-          location.host +
-          "/wisp/";
-
-        try {
-          const current = await connection.getTransport();
-          if (current !== "/epoxy/index.mjs") {
-            await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+          try {
+            const current = await connection.getTransport();
+            if (current !== "/epoxy/index.mjs") {
+              await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+            }
+          } catch (err) {
+            console.error("Failed to set BareMux transport in mediaplayer:", err);
           }
-        } catch (err) {
-          console.error("Failed to set BareMux transport in mediaplayer:", err);
         }
-      }
 
-      async function boot() {
-        const frame = document.getElementById("media-frame");
-        const noSrc = document.getElementById("no-src");
-        const titleEl = document.getElementById("player-title");
-        const openDirect = document.getElementById("open-direct");
-        const reloadBtn = document.getElementById("reload-btn");
-
-        const src = getParam("src");
-        const title = getParam("title") || "Media";
-
-        if (titleEl) titleEl.textContent = title;
-
-        if (!src) {
-          if (frame) frame.style.display = "none";
-          if (noSrc) noSrc.style.display = "flex";
-          if (openDirect) openDirect.style.display = "none";
-          if (reloadBtn) reloadBtn.style.display = "none";
+        // --- Create Scramjet iframe inside our wrapper ---
+        if (!wrap) {
+          console.error("No frame wrapper found");
           return;
         }
 
-        // set "OPEN RAW" link to the unproxied src for debugging / fallback
-        if (openDirect) {
-          openDirect.href = src;
-        }
+        wrap.innerHTML = "";
+        const frameObj = scramjet.createFrame();
+        frameObj.frame.id = "media-frame";
+        frameObj.frame.style.width = "100%";
+        frameObj.frame.style.height = "100%";
+        frameObj.frame.style.border = "none";
 
-        // init BareMux + SW FIRST so we don't hit "no bare clients"
-        await initProxyTransport();
+        wrap.appendChild(frameObj.frame);
 
-        // now load the proxied URL into iframe
-        if (frame) {
-          frame.src = src;
-        }
+        frameObj.go(src);
 
         if (reloadBtn) {
           reloadBtn.addEventListener("click", () => {
-            if (frame) frame.src = frame.src;
+            frameObj.go(src);
           });
         }
       }
 
-      window.addEventListener("DOMContentLoaded", boot);
+      window.addEventListener("DOMContentLoaded", () => {
+        setupScramjetAndPlay().catch((err) =>
+          console.error("mediaplayer boot error:", err)
+        );
+      });
     </script>
   </body>
 </html>
