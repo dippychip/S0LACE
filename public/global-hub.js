@@ -1,5 +1,5 @@
 // global-hub.js
-// Shared settings: tab cloaking + accent + theme + background across all pages.
+// Handles accent, theme, background, tab cloaking — without breaking layout.
 
 (function () {
   const ACCENT_KEY = "s0laceAccent";
@@ -7,264 +7,139 @@
   const THEME_KEY = "s0laceTheme";
   const BG_MODE_KEY = "s0laceBgMode";
   const BG_URL_KEY = "s0laceBgUrl";
-  const MEDIA_CACHE_KEY = "s0laceMediaCache";
 
   const STAR_GIF = "https://i.ibb.co/3mJFWyY/starfield-loop.gif";
 
   const ACCENTS = {
-    green: {
-      accent: "#00ff7f",
-      soft: "rgba(0,255,127,0.12)"
-    },
-    violet: {
-      accent: "#a855f7",
-      soft: "rgba(168,85,247,0.12)"
-    },
-    amber: {
-      accent: "#fbbf24",
-      soft: "rgba(251,191,36,0.12)"
-    },
-    white: {
-      accent: "#ffffff",
-      soft: "rgba(255,255,255,0.18)"
-    }
+    green: { accent: "#00ff7f", soft: "rgba(0,255,127,0.12)" },
+    violet: { accent: "#a855f7", soft: "rgba(168,85,247,0.12)" },
+    amber: { accent: "#fbbf24", soft: "rgba(251,191,36,0.12)" },
+    white: { accent: "#ffffff", soft: "rgba(255,255,255,0.18)" }
   };
 
-  function setCssVar(name, value) {
-    document.documentElement.style.setProperty(name, value);
+  function setVar(n, v) {
+    document.documentElement.style.setProperty(n, v);
   }
 
-  // ========================================================
-  //                ACCENT COLOR
-  // ========================================================
-
-  function applyAccent(accentKey, save = true) {
-    const preset = ACCENTS[accentKey] || ACCENTS.green;
-
-    setCssVar("--accent", preset.accent);
-    setCssVar("--accent-soft", preset.soft);
-
-    if (save) {
-      try {
-        localStorage.setItem(ACCENT_KEY, accentKey);
-      } catch (_) {}
-    }
+  // ACCENT ======================================================
+  function applyAccent(key, save = true) {
+    const a = ACCENTS[key] || ACCENTS.green;
+    setVar("--accent", a.accent);
+    setVar("--accent-soft", a.soft);
+    if (save) localStorage.setItem(ACCENT_KEY, key);
   }
 
   function loadAccent() {
-    let stored;
-    try {
-      stored = localStorage.getItem(ACCENT_KEY);
-    } catch (_) {
-      stored = null;
-    }
-
-    if (!stored || !ACCENTS[stored]) stored = "green";
-
-    applyAccent(stored, false);
-    return stored;
+    const key = localStorage.getItem(ACCENT_KEY) || "green";
+    applyAccent(key, false);
+    return key;
   }
 
-  // ========================================================
-  //                  TAB CLOAKING
-  // ========================================================
-
-  function getOrCreateFaviconLink() {
-    let link =
+  // TAB CLOAK ===================================================
+  function faviconEl() {
+    return (
+      document.querySelector('link[rel="icon"]') ||
       document.querySelector('link[rel="shortcut icon"]') ||
-      document.querySelector('link[rel="icon"]');
-
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
-
-    return link;
+      (() => {
+        const l = document.createElement("link");
+        l.rel = "icon";
+        document.head.appendChild(l);
+        return l;
+      })()
+    );
   }
 
   function applyTabCloak(cfg, save = true) {
-    if (!cfg || !cfg.enabled) return;
-
-    const title = cfg.title || document.title;
-    const iconHref = cfg.iconHref || "";
-
-    document.title = title;
-
-    if (iconHref) {
-      const link = getOrCreateFaviconLink();
-      link.href = iconHref;
-    }
-
-    if (save) {
-      try {
-        localStorage.setItem(
-          CLOAK_KEY,
-          JSON.stringify({
-            enabled: true,
-            title,
-            iconHref
-          })
-        );
-      } catch (_) {}
-    }
+    if (!cfg?.enabled) return;
+    document.title = cfg.title || document.title;
+    if (cfg.iconHref) faviconEl().href = cfg.iconHref;
+    if (save) localStorage.setItem(CLOAK_KEY, JSON.stringify(cfg));
   }
 
   function clearTabCloak(save = true) {
-    const og = document.documentElement.getAttribute("data-original-title");
+    const og = document.documentElement.dataset.originalTitle;
     if (og) document.title = og;
-
-    if (save) {
-      try {
-        localStorage.removeItem(CLOAK_KEY);
-      } catch (_) {}
-    }
+    if (save) localStorage.removeItem(CLOAK_KEY);
   }
 
   function loadTabCloak() {
-    let raw;
-    try {
-      raw = localStorage.getItem(CLOAK_KEY);
-    } catch (_) {
-      raw = null;
-    }
-
-    if (!raw) return null;
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || !parsed.enabled) return null;
-
-      applyTabCloak(parsed, false);
-      return parsed;
-    } catch (_) {
-      return null;
-    }
+    const raw = localStorage.getItem(CLOAK_KEY);
+    if (!raw) return;
+    const cfg = JSON.parse(raw);
+    if (cfg.enabled) applyTabCloak(cfg, false);
   }
 
-  // ========================================================
-  //                     THEME (dark/light/baby/xmas)
-  // ========================================================
-
+  // THEME =======================================================
   function applyTheme(theme, save = true) {
-    const t = theme || "dark";
-
-    document.documentElement.setAttribute("data-theme", t);
-
-    if (save) {
-      try {
-        localStorage.setItem(THEME_KEY, t);
-      } catch (_) {}
-    }
+    document.documentElement.setAttribute("data-theme", theme);
+    if (save) localStorage.setItem(THEME_KEY, theme);
   }
 
   function loadTheme() {
-    let stored;
-    try {
-      stored = localStorage.getItem(THEME_KEY);
-    } catch (_) {
-      stored = null;
-    }
-
-    if (!stored) stored = "dark";
-
-    applyTheme(stored, false);
-    return stored;
+    const t = localStorage.getItem(THEME_KEY) || "dark";
+    applyTheme(t, false);
+    return t;
   }
 
-  // ========================================================
-  //                   BACKGROUND (default/gif/custom)
-  // ========================================================
-
+  // BACKGROUND ===================================================
   function applyBackground(mode, url, save = true) {
-    const body = document.body;
-    const m = mode || "default";
+    const b = document.body;
 
-    // remove inline overrides so CRT grid works
-    body.style.backgroundImage = "";
-    body.style.backgroundSize = "";
-    body.style.backgroundAttachment = "";
+    // Reset nothing except background-image — we keep CRT grid intact
+    b.style.backgroundImage = "";
+    b.style.backgroundSize = "";
+    b.style.backgroundAttachment = "";
 
-    if (m === "gif-stars") {
-      body.style.backgroundImage = `url("${STAR_GIF}")`;
-      body.style.backgroundSize = "cover";
-      body.style.backgroundAttachment = "fixed";
+    if (mode === "gif-stars") {
+      b.style.backgroundImage = `url("${STAR_GIF}")`;
+      b.style.backgroundSize = "cover";
+      b.style.backgroundAttachment = "fixed";
     }
 
-    if (m === "custom" && url) {
-      body.style.backgroundImage = `url("${url}")`;
-      body.style.backgroundSize = "cover";
-      body.style.backgroundAttachment = "fixed";
+    if (mode === "custom" && url) {
+      b.style.backgroundImage = `url("${url}")`;
+      b.style.backgroundSize = "cover";
+      b.style.backgroundAttachment = "fixed";
     }
 
     if (save) {
-      try {
-        localStorage.setItem(BG_MODE_KEY, m);
-        if (m === "custom" && url) {
-          localStorage.setItem(BG_URL_KEY, url);
-        } else {
-          localStorage.removeItem(BG_URL_KEY);
-        }
-      } catch (_) {}
+      localStorage.setItem(BG_MODE_KEY, mode);
+      if (mode === "custom") localStorage.setItem(BG_URL_KEY, url || "");
+      else localStorage.removeItem(BG_URL_KEY);
     }
   }
 
   function loadBackground() {
-    let mode, url;
-    try {
-      mode = localStorage.getItem(BG_MODE_KEY) || "default";
-      url = localStorage.getItem(BG_URL_KEY) || "";
-    } catch (_) {
-      mode = "default";
-      url = "";
-    }
-
+    const mode = localStorage.getItem(BG_MODE_KEY) || "default";
+    const url = localStorage.getItem(BG_URL_KEY) || "";
     applyBackground(mode, url, false);
     return { mode, url };
   }
 
-  // ========================================================
-  //                     INITIAL BOOTSTRAP
-  // ========================================================
+  // INIT ========================================================
+  function boot() {
+    document.documentElement.dataset.originalTitle = document.title;
 
-  function bootstrap() {
-    if (!document.documentElement.getAttribute("data-original-title")) {
-      document.documentElement.setAttribute(
-        "data-original-title",
-        document.title
-      );
-    }
-
-    const activeAccent = loadAccent();
-    const activeTheme = loadTheme();
-    const bgState = loadBackground();
+    const accent = loadAccent();
+    const theme = loadTheme();
+    const bg = loadBackground();
     loadTabCloak();
 
-    // Notify settings.html everything is ready
     window.dispatchEvent(
       new CustomEvent("s0lace:settingsLoaded", {
-        detail: {
-          accent: activeAccent,
-          theme: activeTheme,
-          bgMode: bgState.mode,
-          bgUrl: bgState.url
-        }
+        detail: { accent, theme, bgMode: bg.mode, bgUrl: bg.url }
       })
     );
   }
 
-  document.addEventListener("DOMContentLoaded", bootstrap);
+  document.addEventListener("DOMContentLoaded", boot);
 
-  // Expose public API for settings.html
+  // Export API
   window.S0LACE = {
     applyAccent,
     applyTabCloak,
     clearTabCloak,
-    loadAccent,
     applyTheme,
-    loadTheme,
-    applyBackground,
-    loadBackground,
-    MEDIA_CACHE_KEY
+    applyBackground
   };
 })();
