@@ -23,14 +23,14 @@ const fastify = Fastify({
   serverFactory: (handler) => {
     return createServer()
       .on("request", (req, res) => {
-        // Only apply COOP/COEP to Scramjet / BareMux / Epoxy / mediaplayer,
-        // so normal pages (like media.html) can load TMDB images directly.
+        // 🔧 Only isolate Scramjet / BareMux / Epoxy / mediaplayer / scramjet proxied URLs
         try {
           const url = new URL(req.url || "/", "http://localhost");
           const path = url.pathname || "/";
 
           const needsIsolation =
             path.startsWith("/scram/") ||
+            path.startsWith("/scramjet/") ||   // <-- added this
             path.startsWith("/baremux/") ||
             path.startsWith("/epoxy/") ||
             path === "/mediaplayer.html";
@@ -40,7 +40,7 @@ const fastify = Fastify({
             res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
           }
         } catch {
-          // if URL parsing somehow fails, just skip COOP/COEP
+          // if URL parsing explodes, just don't set COOP/COEP
         }
 
         handler(req, res);
