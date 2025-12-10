@@ -1,5 +1,5 @@
 // global-hub.js
-// Handles accent, theme, background, tab cloaking — without breaking layout.
+// Handles accent, theme, background, tab cloaking, anti-close, about:blank launch.
 
 (function () {
   const ACCENT_KEY = "s0laceAccent";
@@ -7,6 +7,9 @@
   const THEME_KEY = "s0laceTheme";
   const BG_MODE_KEY = "s0laceBgMode";
   const BG_URL_KEY = "s0laceBgUrl";
+
+  const STARTUP_KEY = "s0laceStartupBlank";
+  const ANTI_CLOSE_KEY = "s0laceAntiClose";
 
   const STAR_GIF = "background.gif";
 
@@ -21,11 +24,18 @@
     document.documentElement.style.setProperty(n, v);
   }
 
-  // ACCENT ======================================================
+  /* ===========================================================
+      ACCENT COLOR (NOW ALSO UPDATES data-accent FOR ICON SWAP)
+     =========================================================== */
   function applyAccent(key, save = true) {
     const a = ACCENTS[key] || ACCENTS.green;
+
     setVar("--accent", a.accent);
     setVar("--accent-soft", a.soft);
+
+    // ⭐ REQUIRED FOR ACCOUNT ICON SWITCHING ⭐
+    document.documentElement.setAttribute("data-accent", key);
+
     if (save) localStorage.setItem(ACCENT_KEY, key);
   }
 
@@ -35,7 +45,9 @@
     return key;
   }
 
-  // TAB CLOAK ===================================================
+  /* ===========================================================
+      TAB CLOAK
+     =========================================================== */
   function faviconEl() {
     return (
       document.querySelector('link[rel="icon"]') ||
@@ -69,7 +81,9 @@
     if (cfg.enabled) applyTabCloak(cfg, false);
   }
 
-  // THEME =======================================================
+  /* ===========================================================
+      THEME
+     =========================================================== */
   function applyTheme(theme, save = true) {
     document.documentElement.setAttribute("data-theme", theme);
     if (save) localStorage.setItem(THEME_KEY, theme);
@@ -81,11 +95,13 @@
     return t;
   }
 
-  // BACKGROUND ===================================================
+  /* ===========================================================
+      BACKGROUND
+     =========================================================== */
   function applyBackground(mode, url, save = true) {
     const b = document.body;
 
-    // Reset nothing except background-image — we keep CRT grid intact
+    // reset only background-image, keep CRT grid
     b.style.backgroundImage = "";
     b.style.backgroundSize = "";
     b.style.backgroundAttachment = "";
@@ -116,41 +132,10 @@
     return { mode, url };
   }
 
-  // INIT ========================================================
-  function boot() {
-    document.documentElement.dataset.originalTitle = document.title;
-
-    const accent = loadAccent();
-    const theme = loadTheme();
-    const bg = loadBackground();
-    loadTabCloak();
-
-    window.dispatchEvent(
-      new CustomEvent("s0lace:settingsLoaded", {
-        detail: { accent, theme, bgMode: bg.mode, bgUrl: bg.url }
-      })
-    );
-  }
-
-  document.addEventListener("DOMContentLoaded", boot);
-
-  // Export API
-  window.S0LACE = {
-    applyAccent,
-    applyTabCloak,
-    clearTabCloak,
-    applyTheme,
-    applyBackground
-  };
-
-    /* ===========================================================
-      ABOUT:BLANK STARTUP + ANTI-CLOSE PROTECTION
+  /* ===========================================================
+      ANTI-CLOSE
      =========================================================== */
 
-  const STARTUP_KEY = "s0laceStartupBlank";
-  const ANTI_CLOSE_KEY = "s0laceAntiClose";
-
-  // ---------- Anti-Close Protection ----------
   function preventClose(e) {
     e.preventDefault();
     e.returnValue = "";
@@ -170,29 +155,28 @@
     return enabled;
   }
 
-  // Make internal links not trigger warning
   function patchInternalNavigation() {
     document.querySelectorAll("a").forEach(a => {
       a.addEventListener("click", () => {
-        disableAntiClose();  
+        disableAntiClose();
         setTimeout(() => {
-          if (localStorage.getItem(ANTI_CLOSE_KEY) === "1") {
+          if (localStorage.getItem(ANTI_CLOSE_KEY) === "1")
             enableAntiClose();
-          }
         }, 400);
       });
     });
   }
 
-  // ---------- About:Blank Startup ----------
+  /* ===========================================================
+      ABOUT:BLANK STARTUP
+     =========================================================== */
+
   function launchIntoBlank() {
     if (localStorage.getItem(STARTUP_KEY) !== "1") return;
-
-    // Only auto-launch FROM settings, not every page.
     if (!location.pathname.endsWith("settings.html")) return;
 
     const win = window.open("about:blank", "_blank");
-    if (!win) return alert("Popup blocked — allow popups to use about:blank mode.");
+    if (!win) return alert("Popup blocked — enable popups to use about:blank mode.");
 
     win.document.write(`
       <style>
@@ -203,29 +187,53 @@
     `);
   }
 
-  // ---------- INIT ----------
+  /* ===========================================================
+      INIT
+     =========================================================== */
+
+  function boot() {
+    document.documentElement.dataset.originalTitle = document.title;
+
+    const accent = loadAccent();   // now applies data-accent
+    const theme = loadTheme();
+    const bg = loadBackground();
+    loadTabCloak();
+
+    window.dispatchEvent(
+      new CustomEvent("s0lace:settingsLoaded", {
+        detail: { accent, theme, bgMode: bg.mode, bgUrl: bg.url }
+      })
+    );
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    boot();
     loadAntiClose();
     patchInternalNavigation();
     launchIntoBlank();
   });
 
-  // Expose for settings
-  window.S0LACE.enableAntiClose = () => {
-    localStorage.setItem(ANTI_CLOSE_KEY, "1");
-    enableAntiClose();
-  };
+  /* ===========================================================
+      EXPORT API
+     =========================================================== */
 
-  window.S0LACE.disableAntiClose = () => {
-    localStorage.removeItem(ANTI_CLOSE_KEY);
-    disableAntiClose();
-  };
+  window.S0LACE = {
+    applyAccent,
+    applyTabCloak,
+    clearTabCloak,
+    applyTheme,
+    applyBackground,
 
-  window.S0LACE.enableBlankStartup = () => {
-    localStorage.setItem(STARTUP_KEY, "1");
-  };
+    enableAntiClose: () => {
+      localStorage.setItem(ANTI_CLOSE_KEY, "1");
+      enableAntiClose();
+    },
+    disableAntiClose: () => {
+      localStorage.removeItem(ANTI_CLOSE_KEY);
+      disableAntiClose();
+    },
 
-  window.S0LACE.disableBlankStartup = () => {
-    localStorage.removeItem(STARTUP_KEY);
+    enableBlankStartup: () => localStorage.setItem(STARTUP_KEY, "1"),
+    disableBlankStartup: () => localStorage.removeItem(STARTUP_KEY)
   };
 })();
