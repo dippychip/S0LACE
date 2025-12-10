@@ -1,46 +1,70 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S0LACE • Account</title>
 
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="index.css" />
   <script src="global-hub.js" defer></script>
   <script type="module" src="firebase.js"></script>
 
   <style>
-    .account-panel {
-      max-width: 420px;
+    .account-wrapper {
+      max-width: 480px;
       margin: 0 auto;
-      font-size: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 10px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      text-shadow: 0 0 6px var(--accent);
+    }
+
+    .account-panel {
+      border: 2px solid var(--border-hard);
+      background: var(--panel);
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.6);
     }
 
-    input {
+    .account-input {
       width: 100%;
       padding: 8px;
+      border: 2px solid var(--border-hard);
       background: #000;
       color: var(--fg);
-      border: 2px solid var(--border-hard);
       font-family: "Press Start 2P";
-      font-size: 8px;
+      font-size: 9px;
     }
 
     .account-btn {
-      padding: 8px;
+      padding: 10px;
       background: var(--accent-soft);
       color: var(--accent);
       border: 2px solid var(--accent);
-      font-size: 9px;
       font-family: "Press Start 2P";
+      font-size: 10px;
       cursor: pointer;
+      text-align: center;
     }
 
     .account-btn:hover {
-      box-shadow: 0 0 10px var(--accent);
+      box-shadow: 0 0 18px var(--accent);
+    }
+
+    #auth-status {
+      font-size: 8px;
+      color: var(--accent);
+      min-height: 12px;
     }
   </style>
 </head>
@@ -54,40 +78,48 @@
     <a href="games.html">Games</a>
     <a href="media.html">Media</a>
     <a href="settings.html">Settings</a>
-    <a href="account.html" class="active">👤</a>
+    <a href="account.html" class="active">Account</a>
   </nav>
 </header>
 
 <main>
   <div class="page-header"><h1>Account</h1></div>
 
-  <section class="home-panel account-panel">
+  <div class="account-wrapper">
 
-    <div id="user-box" style="display:none;">
-      Logged in as:
-      <br>
-      <span id="user-email" style="color:var(--accent);"></span>
-      <br><br>
-      <button class="account-btn" id="logout-btn">Log Out</button>
+    <!-- LOGGED-IN BLOCK -->
+    <section id="user-box" class="account-panel" style="display:none;">
+      <div class="section-title">ACCOUNT INFO</div>
+
+      Logged in as:  
+      <span id="user-email" style="color:var(--accent)"></span>
+
       <button class="account-btn" id="sync-btn">Sync Settings Now</button>
-    </div>
+      <button class="account-btn" id="logout-btn">Logout</button>
+    </section>
 
-    <div id="auth-box">
-      <div>Email</div>
-      <input id="email-input" type="email">
+    <!-- LOGIN / SIGNUP -->
+    <section id="auth-box" class="account-panel">
+      <div class="section-title">LOGIN / SIGN UP</div>
 
-      <div>Password</div>
-      <input id="pass-input" type="password">
+      <form id="auth-form" onsubmit="return false;" style="display:flex;flex-direction:column;gap:12px;">
+        <div>Email</div>
+        <input id="email-input" class="account-input" type="email" autocomplete="email" />
 
-      <button class="account-btn" id="login-btn">Login</button>
-      <button class="account-btn" id="signup-btn">Create Account</button>
+        <div>Password</div>
+        <input id="pass-input" class="account-input" type="password" autocomplete="current-password" />
 
-      <div id="auth-status" style="margin-top:4px;color:var(--accent);font-size:8px;"></div>
-    </div>
+        <button class="account-btn" id="login-btn" type="button">Login</button>
+        <button class="account-btn" id="signup-btn" type="button">Create Account</button>
+      </form>
 
-  </section>
+      <div id="auth-status"></div>
+    </section>
+
+  </div>
 </main>
 
+<!-- LOGIC -->
 <script type="module">
 import { auth, db } from "./firebase.js";
 import {
@@ -111,43 +143,60 @@ const userBox = document.getElementById("user-box");
 const authBox = document.getElementById("auth-box");
 const userEmail = document.getElementById("user-email");
 
-/* ---------------- LOGIN ---------------- */
-document.getElementById("login-btn").onclick = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
-    statusEl.textContent = "Logged in!";
-  } catch (err) {
-    statusEl.textContent = err.message;
-  }
-};
+const syncBtn = document.getElementById("sync-btn");
 
-/* ---------------- SIGN UP ---------------- */
-document.getElementById("signup-btn").onclick = async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
-    statusEl.textContent = "Account created!";
-  } catch (err) {
-    statusEl.textContent = err.message;
-  }
-};
+/* -------- AUTO-SYNC ENGINE -------- */
 
-/* ---------------- LOG OUT ---------------- */
-document.getElementById("logout-btn").onclick = () => {
-  signOut(auth);
-};
+let syncTimeout = null;
 
-/* ---------------- SYNC SETTINGS ---------------- */
-document.getElementById("sync-btn").onclick = async () => {
+window.S0LACE._syncCloud = async function () {
   const user = auth.currentUser;
   if (!user) return;
 
-  const data = JSON.parse(JSON.stringify(localStorage));
-  await setDoc(doc(db, "settings", user.uid), data);
-
-  statusEl.textContent = "Synced settings!";
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    const data = JSON.parse(JSON.stringify(localStorage));
+    await setDoc(doc(db, "settings", user.uid), data);
+  }, 250);
 };
 
-/* ---------------- AUTH STATE ---------------- */
+/* Hook all localStorage modifications */
+const originalSet = localStorage.setItem;
+localStorage.setItem = function (k, v) {
+  originalSet.call(localStorage, k, v);
+  window.S0LACE._syncCloud();
+};
+
+/* -------- LOGIN -------- */
+document.getElementById("login-btn").onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
+    statusEl.textContent = "Logged in.";
+  } catch (e) {
+    statusEl.textContent = e.message;
+  }
+};
+
+/* -------- SIGNUP -------- */
+document.getElementById("signup-btn").onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
+    statusEl.textContent = "Account created.";
+  } catch (e) {
+    statusEl.textContent = e.message;
+  }
+};
+
+/* -------- LOGOUT -------- */
+document.getElementById("logout-btn").onclick = () => signOut(auth);
+
+/* -------- MANUAL SYNC -------- */
+syncBtn.onclick = async () => {
+  window.S0LACE._syncCloud();
+  statusEl.textContent = "Synced!";
+};
+
+/* -------- LOAD CLOUD SETTINGS ON LOGIN -------- */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     userBox.style.display = "block";
@@ -157,7 +206,7 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await getDoc(doc(db, "settings", user.uid));
     if (snap.exists()) {
       const cloud = snap.data();
-      for (let k in cloud) localStorage.setItem(k, cloud[k]);
+      Object.keys(cloud).forEach(k => localStorage.setItem(k, cloud[k]));
       location.reload();
     }
   } else {
