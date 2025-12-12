@@ -1123,4 +1123,26 @@ main.player-main {
   max-height: 260px;
   overflow: hidden;
 }
+
+  /* HARD RESET FOR MEDIA GRID */
+.media-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  gap: 20px !important;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px 0;
+  justify-items: center;
 }
+
+/* Prevent stretching */
+.media-card {
+  width: 160px !important;
+  max-width: 160px !important;
+}
+.poster-thumb {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
