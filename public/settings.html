@@ -40,7 +40,7 @@
     .settings-select {
       width: 100%;
       padding: 6px 8px;
-      margin-top: 4px;
+      margin-top: 6px;
       border: 2px solid var(--border-hard);
       background: #000;
       color: var(--fg);
@@ -63,6 +63,13 @@
     .settings-btn:hover {
       background: rgba(0,255,127,.25);
       box-shadow: 0 0 14px rgba(0,255,127,.6);
+    }
+
+    .muted {
+      margin-top: 8px;
+      font-size: 8px;
+      color: var(--fg-dim);
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -96,13 +103,14 @@
         <option value="custom">CUSTOM…</option>
       </select>
 
-      <div id="custom-cloak-box" style="display:none;margin-top:12px;">
+      <div id="custom-cloak-box" style="display:none;">
         <input id="cloak-title" class="settings-input" placeholder="Tab Title" />
         <input id="cloak-icon" class="settings-input" placeholder="Favicon URL" />
-        <button class="settings-btn" id="apply-custom-cloak">APPLY</button>
+        <button class="settings-btn" id="apply-custom-cloak">APPLY CUSTOM</button>
       </div>
 
       <button class="settings-btn" id="reset-cloak">RESET CLOAK</button>
+      <div id="cloak-status" class="muted"></div>
     </section>
 
     <!-- APPEARANCE -->
@@ -115,12 +123,14 @@
         <option value="xmas">GREEN</option>
       </select>
 
-      <select id="accent-select" class="settings-select" style="margin-top:10px;">
+      <select id="accent-select" class="settings-select">
         <option value="green">GREEN</option>
         <option value="violet">VIOLET</option>
         <option value="amber">AMBER</option>
         <option value="white">WHITE</option>
       </select>
+
+      <div class="muted">Theme + accent apply instantly and persist across pages.</div>
     </section>
 
     <!-- BACKGROUND -->
@@ -133,28 +143,52 @@
         <option value="custom">CUSTOM IMAGE</option>
       </select>
 
-      <input id="bg-url" class="settings-input" placeholder="Image URL" style="margin-top:10px;display:none;">
+      <input id="bg-url" class="settings-input" placeholder="Image URL" style="display:none;">
+      <button class="settings-btn" id="bg-apply-custom" style="display:none;">APPLY IMAGE</button>
+
+      <div class="muted">Custom applies on blur + apply button (if you want it now).</div>
     </section>
 
     <!-- SECURITY -->
     <section class="settings-panel">
       <div class="settings-title">SECURITY</div>
-      <label><input type="checkbox" id="anti-close-toggle"> ANTI-CLOSE</label>
+
+      <label style="display:block; margin-top: 6px;">
+        <input type="checkbox" id="anti-close-toggle">
+        SECURLY + BLOCKSI BLOCKER (ANTI-CLOSE)
+      </label>
+
       <button class="settings-btn" id="blank-launch">OPEN IN ABOUT:BLANK</button>
+
+      <div class="muted">
+        Anti-close warns on refresh/close. Internal nav is handled in global-hub.js so it doesn’t spam.
+      </div>
     </section>
 
     <!-- SAVE FILE -->
     <section class="settings-panel">
       <div class="settings-title">SAVE FILE</div>
+
       <button class="settings-btn" id="btn-export">EXPORT SAVE</button>
       <button class="settings-btn" id="btn-import-trigger">IMPORT SAVE</button>
-      <input type="file" id="btn-import" accept=".json" hidden>
+      <input type="file" id="btn-import" accept=".json,application/json" hidden>
+
+      <div class="muted">
+        Exports: all <span style="color:var(--accent);">s0lace*</span> keys + any <span style="color:var(--accent);">game_*</span> progress keys stored in localStorage.
+      </div>
     </section>
 
     <!-- INFO -->
     <section class="settings-panel">
       <div class="settings-title">INFO</div>
-      <a href="about.html"><button class="settings-btn">ABOUT US</button></a>
+      <a href="about.html"><button class="settings-btn" type="button">ABOUT US</button></a>
+    </section>
+
+    <!-- STORAGE -->
+    <section class="settings-panel">
+      <div class="settings-title">STORAGE</div>
+      <button class="settings-btn" id="btn-reset-settings">RESET SETTINGS</button>
+      <button class="settings-btn" id="btn-clear-media">CLEAR MEDIA CACHE</button>
     </section>
 
   </div>
@@ -162,39 +196,249 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  // If global-hub hasn't loaded yet for some reason, avoid hard crashes.
+  const hasS0LACE = () => window.S0LACE && typeof window.S0LACE.applyTheme === "function";
 
-  /* ===== SAVE / IMPORT ===== */
+  /* ================= TAB CLOAKING ================= */
+  const PRESETS = {
+    drive: { enabled: true, title: "My Drive - Google Drive", iconHref: "https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png" },
+    schoology: { enabled: true, title: "Schoology", iconHref: "https://asset-cdn.schoology.com/sites/all/themes/schoology_theme/favicon.ico" },
+    docs: { enabled: true, title: "Google Docs", iconHref: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
+    google: { enabled: true, title: "Google", iconHref: "https://www.gstatic.com/images/branding/searchlogo/ico/favicon.ico" }
+  };
+
+  const cloakSelect = document.getElementById("cloak-select");
+  const customBox = document.getElementById("custom-cloak-box");
+  const cloakTitle = document.getElementById("cloak-title");
+  const cloakIcon = document.getElementById("cloak-icon");
+  const cloakApplyCustom = document.getElementById("apply-custom-cloak");
+  const cloakReset = document.getElementById("reset-cloak");
+  const cloakStatus = document.getElementById("cloak-status");
+
+  const CLOAK_KEY = "s0laceTabCloak";
+
+  function readJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key) || ""); } catch { return null; }
+  }
+
+  function setCloakStatus(msg) {
+    cloakStatus.textContent = msg || "";
+  }
+
+  function applyAndSaveCloak(cfg) {
+    if (!hasS0LACE()) return setCloakStatus("S0LACE engine not ready yet. Refresh.");
+    cfg = { ...cfg, enabled: true };
+    window.S0LACE.applyTabCloak(cfg, true);
+    localStorage.setItem(CLOAK_KEY, JSON.stringify(cfg));
+    setCloakStatus("Cloak applied.");
+  }
+
+  cloakSelect.addEventListener("change", () => {
+    const v = cloakSelect.value;
+
+    if (v === "custom") {
+      customBox.style.display = "block";
+      setCloakStatus("Enter custom title/icon then apply.");
+      return;
+    }
+
+    customBox.style.display = "none";
+    if (PRESETS[v]) applyAndSaveCloak(PRESETS[v]);
+  });
+
+  cloakApplyCustom.addEventListener("click", () => {
+    const title = (cloakTitle.value || "").trim();
+    const iconHref = (cloakIcon.value || "").trim();
+    if (!title) return setCloakStatus("Title required.");
+    applyAndSaveCloak({ enabled: true, title, iconHref });
+  });
+
+  cloakReset.addEventListener("click", () => {
+    if (!hasS0LACE()) return setCloakStatus("S0LACE engine not ready yet. Refresh.");
+    window.S0LACE.clearTabCloak(true);
+    localStorage.removeItem(CLOAK_KEY);
+    cloakSelect.value = "";
+    customBox.style.display = "none";
+    cloakTitle.value = "";
+    cloakIcon.value = "";
+    setCloakStatus("Cloak reset.");
+  });
+
+  // Sync UI from saved cloak
+  const savedCloak = readJSON(CLOAK_KEY);
+  if (savedCloak && savedCloak.enabled) {
+    // Match preset if possible
+    const presetKey = Object.keys(PRESETS).find(k =>
+      PRESETS[k].title === savedCloak.title && PRESETS[k].iconHref === savedCloak.iconHref
+    );
+    if (presetKey) {
+      cloakSelect.value = presetKey;
+      customBox.style.display = "none";
+    } else {
+      cloakSelect.value = "custom";
+      customBox.style.display = "block";
+      cloakTitle.value = savedCloak.title || "";
+      cloakIcon.value = savedCloak.iconHref || "";
+    }
+    setCloakStatus("Cloak is active.");
+  } else {
+    setCloakStatus("No cloak active.");
+  }
+
+  /* ================= APPEARANCE ================= */
+  const themeSelect = document.getElementById("theme-select");
+  const accentSelect = document.getElementById("accent-select");
+
+  themeSelect.addEventListener("change", e => {
+    if (!hasS0LACE()) return;
+    window.S0LACE.applyTheme(e.target.value, true);
+  });
+
+  accentSelect.addEventListener("change", e => {
+    if (!hasS0LACE()) return;
+    window.S0LACE.applyAccent(e.target.value, true);
+  });
+
+  // Initial sync from localStorage
+  themeSelect.value = localStorage.getItem("s0laceTheme") || "dark";
+  accentSelect.value = localStorage.getItem("s0laceAccent") || "green";
+
+  /* ================= BACKGROUND ================= */
+  const bgMode = document.getElementById("bg-mode");
+  const bgUrl = document.getElementById("bg-url");
+  const bgApplyBtn = document.getElementById("bg-apply-custom");
+
+  function showBgUrlRow(show) {
+    bgUrl.style.display = show ? "block" : "none";
+    bgApplyBtn.style.display = show ? "block" : "none";
+  }
+
+  bgMode.addEventListener("change", () => {
+    const mode = bgMode.value;
+    showBgUrlRow(mode === "custom");
+    if (!hasS0LACE()) return;
+    const url = mode === "custom" ? (bgUrl.value || "").trim() : "";
+    window.S0LACE.applyBackground(mode, url, true);
+  });
+
+  bgUrl.addEventListener("blur", () => {
+    if (bgMode.value !== "custom") return;
+    if (!hasS0LACE()) return;
+    window.S0LACE.applyBackground("custom", (bgUrl.value || "").trim(), true);
+  });
+
+  bgApplyBtn.addEventListener("click", () => {
+    if (bgMode.value !== "custom") return;
+    if (!hasS0LACE()) return;
+    window.S0LACE.applyBackground("custom", (bgUrl.value || "").trim(), true);
+  });
+
+  // Initial sync background
+  bgMode.value = localStorage.getItem("s0laceBgMode") || "default";
+  bgUrl.value = localStorage.getItem("s0laceBgUrl") || "";
+  showBgUrlRow(bgMode.value === "custom");
+
+  /* ================= SECURITY ================= */
+  const antiToggle = document.getElementById("anti-close-toggle");
+  antiToggle.checked = localStorage.getItem("s0laceAntiClose") === "1";
+
+  antiToggle.addEventListener("change", e => {
+    if (!hasS0LACE()) return;
+    if (e.target.checked) window.S0LACE.enableAntiClose();
+    else window.S0LACE.disableAntiClose();
+  });
+
+  document.getElementById("blank-launch").addEventListener("click", () => {
+    const win = window.open("about:blank", "_blank");
+    if (!win) return alert("Popup blocked.");
+
+    win.document.write(`
+      <style>
+        body { margin:0; background:black; display:flex; align-items:center; justify-content:center; }
+        iframe { width:100vw; height:100vh; border:none; }
+      </style>
+      <iframe src="${location.origin}/index.html"></iframe>
+    `);
+  });
+
+  /* ================= SAVE / IMPORT ================= */
   const exportBtn = document.getElementById("btn-export");
   const importBtn = document.getElementById("btn-import");
   const importTrigger = document.getElementById("btn-import-trigger");
 
-  exportBtn.onclick = () => {
-    const data = {};
-    Object.keys(localStorage).forEach(k => {
-      if (k.startsWith("s0lace") || k.startsWith("game_")) {
-        data[k] = localStorage.getItem(k);
-      }
-    });
+  function buildSaveObject() {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+      // Save all your settings + game progress keys
+      if (k.startsWith("s0lace") || k.startsWith("game_")) {
+        out[k] = localStorage.getItem(k);
+      }
+    }
+    return out;
+  }
+
+  exportBtn.addEventListener("click", () => {
+    const data = buildSaveObject();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "s0lace-save.json";
+    document.body.appendChild(a);
     a.click();
-  };
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
 
-  importTrigger.onclick = () => importBtn.click();
-  importBtn.onchange = () => {
+  importTrigger.addEventListener("click", () => importBtn.click());
+
+  importBtn.addEventListener("change", () => {
+    const file = importBtn.files && importBtn.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
-      const json = JSON.parse(reader.result);
-      Object.entries(json).forEach(([k,v]) => localStorage.setItem(k,v));
-      alert("Save loaded.");
-      location.reload();
+      try {
+        const json = JSON.parse(String(reader.result || "{}"));
+        Object.entries(json).forEach(([k, v]) => {
+          if (typeof k === "string") localStorage.setItem(k, String(v));
+        });
+        alert("Save loaded.");
+        location.reload();
+      } catch (e) {
+        alert("Bad save file.");
+      } finally {
+        importBtn.value = "";
+      }
     };
-    reader.readAsText(importBtn.files[0]);
-  };
+    reader.readAsText(file);
+  });
 
+  /* ================= STORAGE BUTTONS ================= */
+  document.getElementById("btn-reset-settings").addEventListener("click", () => {
+    if (!confirm("Reset ALL settings?")) return;
+
+    [
+      "s0laceTabCloak",
+      "s0laceAccent",
+      "s0laceTheme",
+      "s0laceBgMode",
+      "s0laceBgUrl",
+      "s0laceAntiClose",
+      "s0laceStartupBlank",
+      "s0laceMediaCache"
+    ].forEach(k => localStorage.removeItem(k));
+
+    location.reload();
+  });
+
+  document.getElementById("btn-clear-media").addEventListener("click", () => {
+    localStorage.removeItem("s0laceMediaCache");
+    alert("Media cache cleared.");
+  });
 });
 </script>
 
