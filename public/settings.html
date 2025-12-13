@@ -18,13 +18,8 @@
       gap: 16px;
       margin-bottom: 30px;
     }
-
-    @media (max-width: 1000px) {
-      .settings-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 700px) {
-      .settings-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 1000px) { .settings-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px)  { .settings-grid { grid-template-columns: 1fr; } }
 
     .settings-panel {
       border: 2px solid var(--border-hard);
@@ -102,10 +97,10 @@
       <div id="cloak-custom" style="display:none;">
         <input id="cloak-title" class="settings-input" placeholder="Custom Title" />
         <input id="cloak-icon" class="settings-input" placeholder="Favicon URL" />
-        <button class="settings-btn" id="cloak-apply">APPLY</button>
+        <button class="settings-btn" id="cloak-apply" type="button">APPLY</button>
       </div>
 
-      <button class="settings-btn" id="cloak-reset">RESET</button>
+      <button class="settings-btn" id="cloak-reset" type="button">RESET</button>
     </section>
 
     <!-- APPEARANCE -->
@@ -148,127 +143,184 @@
         ENABLE ANTI-CLOSE
       </label>
 
-      <button class="settings-btn" id="blank-launch">
+      <button class="settings-btn" id="blank-launch" type="button">
         LAUNCH ABOUT:BLANK
       </button>
     </section>
 
-    <!-- SAVE / LOAD -->
+    <!-- SAVE / IMPORT -->
     <section class="settings-panel">
       <div class="settings-title">SAVE / LOAD</div>
 
-      <button class="settings-btn" id="export-settings">EXPORT SETTINGS</button>
-      <input type="file" id="import-file" hidden />
-      <button class="settings-btn" id="import-settings">IMPORT SETTINGS</button>
+      <button class="settings-btn" id="export-settings" type="button">EXPORT SETTINGS</button>
+      <input type="file" id="import-file" hidden accept="application/json" />
+      <button class="settings-btn" id="import-settings" type="button">IMPORT SETTINGS</button>
     </section>
 
     <!-- INFO -->
     <section class="settings-panel">
       <div class="settings-title">INFO</div>
-      <a href="about.html"><button class="settings-btn">ABOUT US</button></a>
+      <a href="about.html"><button class="settings-btn" type="button">ABOUT US</button></a>
     </section>
 
   </div>
 </main>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  /* ---------- TAB CLOAK ---------- */
-  const PRESETS = {
-    drive:{title:"My Drive - Google Drive",iconHref:"https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png"},
-    schoology:{title:"Schoology",iconHref:"https://asset-cdn.schoology.com/sites/all/themes/schoology_theme/favicon.ico"},
-    docs:{title:"Google Docs",iconHref:"https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico"},
-    google:{title:"Google",iconHref:"favicon.ico"}
-  };
-
-  const select = document.getElementById("cloak-select");
-  const customBox = document.getElementById("cloak-custom");
-
-  function applyCloak(cfg){
-    cfg.enabled = true;
-    S0LACE.applyTabCloak(cfg, true);
-    localStorage.setItem("s0laceTabCloak", JSON.stringify(cfg));
-  }
-
-  select.addEventListener("change", () => {
-    const v = select.value;
-    customBox.style.display = v === "custom" ? "block" : "none";
-    if (PRESETS[v]) applyCloak(PRESETS[v]);
+(function () {
+  // Wait until DOM exists
+  document.addEventListener("DOMContentLoaded", () => {
+    // Wait until global-hub has created window.S0LACE (because it's defer)
+    const waitForS0LACE = (tries = 0) => {
+      if (window.S0LACE) return init();
+      if (tries > 200) return console.error("S0LACE API never loaded (global-hub.js not running).");
+      setTimeout(() => waitForS0LACE(tries + 1), 25);
+    };
+    waitForS0LACE();
   });
 
-  document.getElementById("cloak-apply").addEventListener("click", () => {
-    applyCloak({
-      title: document.getElementById("cloak-title").value.trim(),
-      iconHref: document.getElementById("cloak-icon").value.trim()
+  function init() {
+    /* ---------- ELEMENTS ---------- */
+    const cloakSelect = document.getElementById("cloak-select");
+    const cloakCustom = document.getElementById("cloak-custom");
+    const cloakTitle  = document.getElementById("cloak-title");
+    const cloakIcon   = document.getElementById("cloak-icon");
+    const cloakApply  = document.getElementById("cloak-apply");
+    const cloakReset  = document.getElementById("cloak-reset");
+
+    const themeSelect  = document.getElementById("theme-select");
+    const accentSelect = document.getElementById("accent-select");
+
+    const bgMode = document.getElementById("bg-mode");
+    const bgUrl  = document.getElementById("bg-url");
+
+    const antiClose = document.getElementById("anti-close-toggle");
+    const blankBtn  = document.getElementById("blank-launch");
+
+    const exportBtn = document.getElementById("export-settings");
+    const importBtn = document.getElementById("import-settings");
+    const importFile = document.getElementById("import-file");
+
+    /* ---------- TAB CLOAK ---------- */
+    const PRESETS = {
+      drive: { enabled:true, title:"My Drive - Google Drive", iconHref:"https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png" },
+      schoology: { enabled:true, title:"Schoology", iconHref:"https://asset-cdn.schoology.com/sites/all/themes/schoology_theme/favicon.ico" },
+      docs: { enabled:true, title:"Google Docs", iconHref:"https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
+      google: { enabled:true, title:"Google", iconHref:"favicon.ico" }
+    };
+
+    function applyCloak(cfg) {
+      cfg.enabled = true;
+      window.S0LACE.applyTabCloak(cfg, true);
+      localStorage.setItem("s0laceTabCloak", JSON.stringify(cfg));
+    }
+
+    cloakSelect.addEventListener("change", () => {
+      const v = cloakSelect.value;
+      cloakCustom.style.display = (v === "custom") ? "block" : "none";
+      if (PRESETS[v]) applyCloak(PRESETS[v]);
     });
-  });
 
-  document.getElementById("cloak-reset").addEventListener("click", () => {
-    S0LACE.clearTabCloak(true);
-    localStorage.removeItem("s0laceTabCloak");
-  });
+    cloakApply.addEventListener("click", () => {
+      const title = (cloakTitle?.value || "").trim();
+      const icon  = (cloakIcon?.value || "").trim();
+      if (!title) return;
+      applyCloak({ enabled:true, title, iconHref: icon });
+    });
 
-  /* ---------- APPEARANCE ---------- */
-  document.getElementById("theme-select")
-    .addEventListener("change", e => S0LACE.applyTheme(e.target.value,true));
+    cloakReset.addEventListener("click", () => {
+      window.S0LACE.clearTabCloak(true);
+      localStorage.removeItem("s0laceTabCloak");
+      cloakSelect.value = "";
+      cloakCustom.style.display = "none";
+    });
 
-  document.getElementById("accent-select")
-    .addEventListener("change", e => S0LACE.applyAccent(e.target.value,true));
-
-  /* ---------- BACKGROUND ---------- */
-  document.getElementById("bg-mode")
-    .addEventListener("change", () =>
-      S0LACE.applyBackground(
-        document.getElementById("bg-mode").value,
-        document.getElementById("bg-url").value,
-        true
-      )
+    /* ---------- APPEARANCE ---------- */
+    themeSelect.addEventListener("change", e =>
+      window.S0LACE.applyTheme(e.target.value, true)
     );
 
-  /* ---------- SECURITY ---------- */
-  const antiToggle = document.getElementById("anti-close-toggle");
-  antiToggle.checked = localStorage.getItem("s0laceAntiClose") === "1";
+    accentSelect.addEventListener("change", e =>
+      window.S0LACE.applyAccent(e.target.value, true)
+    );
 
-  antiToggle.addEventListener("change", e =>
-    e.target.checked ? S0LACE.enableAntiClose() : S0LACE.disableAntiClose()
-  );
+    /* ---------- BACKGROUND ---------- */
+    bgMode.addEventListener("change", () => {
+      window.S0LACE.applyBackground(bgMode.value, bgUrl.value, true);
+    });
 
-  document.getElementById("blank-launch").addEventListener("click", () => {
-    const w = window.open("about:blank","_blank");
-    if (!w) return alert("Popup blocked");
+    bgUrl.addEventListener("blur", () => {
+      if (bgMode.value === "custom") {
+        window.S0LACE.applyBackground("custom", bgUrl.value, true);
+      }
+    });
 
-    w.document.write(`
-      <style>html,body,iframe{margin:0;width:100%;height:100%;border:0}</style>
-      <iframe src="${location.origin}/index.html"></iframe>
-    `);
-  });
+    /* ---------- SECURITY ---------- */
+    antiClose.checked = (localStorage.getItem("s0laceAntiClose") === "1");
 
-  /* ---------- EXPORT / IMPORT ---------- */
-  document.getElementById("export-settings").addEventListener("click", () => {
-    const data = JSON.stringify(localStorage, null, 2);
-    const blob = new Blob([data], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "s0lace-settings.json";
-    a.click();
-  });
+    antiClose.addEventListener("change", e => {
+      e.target.checked ? window.S0LACE.enableAntiClose() : window.S0LACE.disableAntiClose();
+    });
 
-  document.getElementById("import-settings").addEventListener("click", () =>
-    document.getElementById("import-file").click()
-  );
+    blankBtn.addEventListener("click", () => {
+      const w = window.open("about:blank", "_blank");
+      if (!w) return alert("Popup blocked");
 
-  document.getElementById("import-file").addEventListener("change", e => {
-    const r = new FileReader();
-    r.onload = () => {
-      const data = JSON.parse(r.result);
-      Object.entries(data).forEach(([k,v]) => localStorage.setItem(k,v));
-      location.reload();
-    };
-    r.readAsText(e.target.files[0]);
-  });
+      w.document.open();
+      w.document.write(`
+        <!doctype html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width,initial-scale=1" />
+            <style>
+              html,body{margin:0;height:100%;background:#000;overflow:hidden}
+              iframe{width:100%;height:100%;border:0;display:block}
+            </style>
+          </head>
+          <body>
+            <iframe src="${location.origin}/index.html"></iframe>
+          </body>
+        </html>
+      `);
+      w.document.close();
+    });
 
-});
+    /* ---------- EXPORT / IMPORT ---------- */
+    exportBtn.addEventListener("click", () => {
+      const obj = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        obj[k] = localStorage.getItem(k);
+      }
+      const data = JSON.stringify(obj, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "s0lace-settings.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    importBtn.addEventListener("click", () => importFile.click());
+
+    importFile.addEventListener("change", () => {
+      const file = importFile.files && importFile.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, String(v)));
+          location.reload();
+        } catch (e) {
+          alert("Invalid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+})();
 </script>
 
 </body>
