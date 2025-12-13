@@ -11,20 +11,14 @@
   <script src="register-sw.js" defer></script>
 
   <style>
-    /* ------ GRID ------ */
     .settings-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       margin-bottom: 30px;
     }
-
-    @media (max-width: 1000px) {
-      .settings-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 700px) {
-      .settings-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 1000px) { .settings-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) { .settings-grid { grid-template-columns: 1fr; } }
 
     .settings-panel {
       border: 2px solid var(--border-hard);
@@ -64,7 +58,6 @@
       font-size: 9px;
       color: var(--accent);
       cursor: pointer;
-      text-align: center;
     }
 
     .settings-btn:hover {
@@ -82,21 +75,15 @@
     <a href="games.html">Games</a>
     <a href="media.html">Media</a>
     <a href="settings.html" class="active">Settings</a>
-    <a href="account.html" class="account-link">
-      <img id="account-icon" alt="Account" />
-    </a>
   </nav>
 </header>
 
 <main>
   <div class="page-header"><h1>Settings</h1></div>
 
-  <!-- ================= GRID ================= -->
   <div class="settings-grid">
 
-    <!-- ===================================================================== -->
-    <!-- TAB CLOAKING (FIXED) -->
-    <!-- ===================================================================== -->
+    <!-- TAB CLOAKING -->
     <section class="settings-panel">
       <div class="settings-title">TAB CLOAKING</div>
 
@@ -107,28 +94,24 @@
         <option value="schoology">SCHOOLOGY</option>
         <option value="docs">GOOGLE DOCS</option>
         <option value="google">GOOGLE</option>
-        <option value="custom">CUSTOM...</option>
+        <option value="custom">CUSTOM…</option>
       </select>
 
       <div id="custom-cloak-box" style="display:none; margin-top:12px;">
         <label>Title
-          <input id="cloak-title" class="settings-input" placeholder="Custom Title" />
+          <input id="cloak-title" class="settings-input" />
         </label>
-
         <label>Favicon
-          <input id="cloak-icon" class="settings-input" placeholder="https://.../favicon.ico" />
+          <input id="cloak-icon" class="settings-input" />
         </label>
-
         <button class="settings-btn" id="apply-custom-cloak">APPLY</button>
         <button class="settings-btn" id="reset-cloak">RESET</button>
       </div>
 
-      <div id="cloak-status" style="margin-top:6px; font-size:8px; color:var(--fg-dim);"></div>
+      <div id="cloak-status" style="font-size:8px; margin-top:6px; color:var(--fg-dim);"></div>
     </section>
 
-    <!-- ===================================================================== -->
     <!-- APPEARANCE -->
-    <!-- ===================================================================== -->
     <section class="settings-panel">
       <div class="settings-title">APPEARANCE</div>
 
@@ -139,7 +122,7 @@
         <option value="xmas">GREEN</option>
       </select>
 
-      <label style="margin-top:12px;">Accent Color</label>
+      <label style="margin-top:12px;">Accent</label>
       <select id="accent-select" class="settings-select">
         <option value="green">GREEN</option>
         <option value="violet">VIOLET</option>
@@ -148,51 +131,57 @@
       </select>
     </section>
 
-    <!-- ===================================================================== -->
     <!-- BACKGROUND -->
-    <!-- ===================================================================== -->
     <section class="settings-panel">
       <div class="settings-title">BACKGROUND</div>
 
       <label>Mode</label>
       <select id="bg-mode" class="settings-select">
-        <option value="default">DEFAULT (CRT)</option>
+        <option value="default">DEFAULT</option>
         <option value="gif-stars">STARRY GIF</option>
         <option value="custom">CUSTOM</option>
       </select>
 
       <div id="bg-url-row" style="display:none; margin-top:12px;">
         <label>Image URL
-          <input id="bg-url" class="settings-input" placeholder="https://example.com/bg.png" />
+          <input id="bg-url" class="settings-input" />
         </label>
       </div>
     </section>
 
-    <!-- ===================================================================== -->
     <!-- SECURITY -->
-    <!-- ===================================================================== -->
     <section class="settings-panel">
       <div class="settings-title">SECURITY</div>
 
-      <label><input type="checkbox" id="anti-close-toggle" />SECURLY + BLOCKSI BLOCKER (ANTI-CLOSE)</label>
+      <label>
+        <input type="checkbox" id="anti-close-toggle" />
+        ANTI-CLOSE PROTECTION
+      </label>
 
-      <button class="settings-btn" id="blank-launch">LAUNCH IN ABOUT:BLANK</button>
+      <button class="settings-btn" id="blank-launch">
+        LAUNCH IN ABOUT:BLANK
+      </button>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- LINKS -->
-    <!-- ===================================================================== -->
+    <!-- SAVE / LOAD -->
     <section class="settings-panel">
-      <div class="settings-title">INFO / SUPPORT</div>
-      <a href="about.html"><button class="settings-btn">ABOUT US</button></a>
+      <div class="settings-title">SAVE FILE</div>
+
+      <button class="settings-btn" id="btn-export">EXPORT SAVE FILE</button>
+
+      <label class="settings-btn" style="cursor:pointer;">
+        IMPORT SAVE FILE
+        <input type="file" id="btn-import" accept=".json" hidden />
+      </label>
+
+      <div style="font-size:8px; margin-top:6px; color:var(--fg-dim);">
+        Includes settings + game progress
+      </div>
     </section>
 
-    <!-- ===================================================================== -->
     <!-- STORAGE -->
-    <!-- ===================================================================== -->
     <section class="settings-panel">
       <div class="settings-title">STORAGE</div>
-
       <button class="settings-btn" id="btn-reset-settings">RESET SETTINGS</button>
       <button class="settings-btn" id="btn-clear-media">CLEAR MEDIA CACHE</button>
     </section>
@@ -201,143 +190,108 @@
 </main>
 
 <script>
-/* ----------------- FIXED PRESETS ----------------- */
+/* ================= TAB CLOAK ================= */
 const PRESETS = {
-  drive: {
-    enabled: true,
-    title: "My Drive - Google Drive",
-    iconHref: "https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png"
-  },
-  schoology: {
-    enabled: true,
-    title: "Schoology",
-    iconHref: "https://asset-cdn.schoology.com/sites/all/themes/schoology_theme/favicon.ico"
-  },
-  docs: {
-    enabled: true,
-    title: "Google Docs",
-    iconHref: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico"
-  },
-  google: {
-    enabled: true,
-    title: "Google",
-    iconHref: "favicon.ico"
-  }
+  drive:{enabled:true,title:"My Drive - Google Drive",iconHref:"https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png"},
+  schoology:{enabled:true,title:"Schoology",iconHref:"https://asset-cdn.schoology.com/sites/all/themes/schoology_theme/favicon.ico"},
+  docs:{enabled:true,title:"Google Docs",iconHref:"https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico"},
+  google:{enabled:true,title:"Google",iconHref:"favicon.ico"}
 };
 
 const cloakSelect = document.getElementById("cloak-select");
-const customBox   = document.getElementById("custom-cloak-box");
-const titleInput  = document.getElementById("cloak-title");
-const iconInput   = document.getElementById("cloak-icon");
-const applyCustomBtn = document.getElementById("apply-custom-cloak");
-const resetBtn       = document.getElementById("reset-cloak");
-const statusEl       = document.getElementById("cloak-status");
+const customBox = document.getElementById("custom-cloak-box");
+const titleInput = document.getElementById("cloak-title");
+const iconInput = document.getElementById("cloak-icon");
+const statusEl = document.getElementById("cloak-status");
 
-function saveAndApplyCloak(cfg) {
-  cfg.enabled = true;
-  window.S0LACE.applyTabCloak(cfg, true);
-  localStorage.setItem("s0laceTabCloak", JSON.stringify(cfg));
-  statusEl.textContent = "Cloak applied.";
+function applyCloak(cfg){
+  window.S0LACE.applyTabCloak(cfg,true);
+  localStorage.setItem("s0laceTabCloak",JSON.stringify(cfg));
+  statusEl.textContent="Cloak applied.";
 }
 
-cloakSelect.addEventListener("change", () => {
-  const val = cloakSelect.value;
+cloakSelect.onchange=()=>{
+  const v=cloakSelect.value;
+  if(v==="custom"){customBox.style.display="block";return;}
+  customBox.style.display="none";
+  if(PRESETS[v]) applyCloak(PRESETS[v]);
+};
 
-  if (val === "custom") {
-    customBox.style.display = "block";
-    return;
-  }
+document.getElementById("apply-custom-cloak").onclick=()=>{
+  if(!titleInput.value.trim()) return;
+  applyCloak({enabled:true,title:titleInput.value.trim(),iconHref:iconInput.value.trim()});
+};
 
-  customBox.style.display = "none";
-
-  if (PRESETS[val]) {
-    saveAndApplyCloak(PRESETS[val]);
-  }
-});
-
-applyCustomBtn.addEventListener("click", () => {
-  const cfg = {
-    enabled: true,
-    title: titleInput.value.trim(),
-    iconHref: iconInput.value.trim()
-  };
-  if (!cfg.title) return statusEl.textContent = "Title required.";
-  saveAndApplyCloak(cfg);
-});
-
-resetBtn.addEventListener("click", () => {
+document.getElementById("reset-cloak").onclick=()=>{
   window.S0LACE.clearTabCloak(true);
   localStorage.removeItem("s0laceTabCloak");
-  statusEl.textContent = "Cloak reset.";
-});
+  statusEl.textContent="Cloak reset.";
+};
 
-/* ----------------- APPEARANCE ----------------- */
-document.getElementById("theme-select").addEventListener("change", e => {
-  window.S0LACE.applyTheme(e.target.value, true);
-});
+/* ================= APPEARANCE ================= */
+theme-select.onchange=e=>S0LACE.applyTheme(e.target.value,true);
+accent-select.onchange=e=>S0LACE.applyAccent(e.target.value,true);
 
-document.getElementById("accent-select").addEventListener("change", e => {
-  window.S0LACE.applyAccent(e.target.value, true);
-});
+/* ================= BACKGROUND ================= */
+bg-mode.onchange=()=>{
+  bg-url-row.style.display=bg-mode.value==="custom"?"block":"none";
+  S0LACE.applyBackground(bg-mode.value,bg-url.value,true);
+};
 
-/* ----------------- BACKGROUND ----------------- */
-const bgMode = document.getElementById("bg-mode");
-const bgUrlRow = document.getElementById("bg-url-row");
-const bgUrlInput = document.getElementById("bg-url");
+/* ================= SECURITY ================= */
+anti-close-toggle.checked=localStorage.getItem("s0laceAntiClose")==="1";
+anti-close-toggle.onchange=e=>{
+  e.target.checked?S0LACE.enableAntiClose():S0LACE.disableAntiClose();
+};
 
-bgMode.addEventListener("change", () => {
-  const m = bgMode.value;
-  bgUrlRow.style.display = m === "custom" ? "block" : "none";
+blank-launch.onclick=()=>{
+  const w=window.open("about:blank","_blank");
+  if(!w) return alert("Popup blocked");
+  w.document.write(`<iframe src="${location.origin}/index.html" style="border:none;width:100vw;height:100vh"></iframe>`);
+};
 
-  const url = m === "custom" ? bgUrlInput.value.trim() : "";
-  window.S0LACE.applyBackground(m, url, true);
-});
+/* ================= SAVE / LOAD ================= */
+const PREFIXES=["s0lace","game:","progress:","save:","UNITY","playerPrefs"];
 
-/* ----------------- SECURITY ----------------- */
-const antiToggle = document.getElementById("anti-close-toggle");
-antiToggle.checked = localStorage.getItem("s0laceAntiClose") === "1";
+btn-export.onclick=()=>{
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(PREFIXES.some(p=>k.startsWith(p))) data[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify({v:1,t:Date.now(),data},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="s0lace-save.json";
+  a.click();
+};
 
-antiToggle.addEventListener("change", e => {
-  if (e.target.checked) window.S0LACE.enableAntiClose();
-  else window.S0LACE.disableAntiClose();
-});
+btn-import.onchange=e=>{
+  const f=e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const p=JSON.parse(r.result);
+    Object.entries(p.data||{}).forEach(([k,v])=>localStorage.setItem(k,v));
+    alert("Save loaded. Reloading…");
+    location.reload();
+  };
+  r.readAsText(f);
+};
 
-document.getElementById("blank-launch").addEventListener("click", () => {
-  const win = window.open("about:blank", "_blank");
-  if (!win) return alert("Popup blocked.");
-
-  win.document.write(`
-    <style>
-      body { margin:0; background:black; display:flex; align-items:center; justify-content:center; }
-      iframe { width:100vw; height:100vh; border:none; }
-    </style>
-    <iframe src="${location.origin}/index.html"></iframe>
-  `);
-});
-
-/* ----------------- STORAGE ----------------- */
-document.getElementById("btn-reset-settings").addEventListener("click", () => {
-  if (!confirm("Reset ALL settings?")) return;
-
-  [
-    "s0laceTabCloak",
-    "s0laceAccent",
-    "s0laceTheme",
-    "s0laceBgMode",
-    "s0laceBgUrl",
-    "s0laceAntiClose",
-    "s0laceStartupBlank",
-    "s0laceMediaCache"
-  ].forEach(k => localStorage.removeItem(k));
-
+/* ================= RESET ================= */
+btn-reset-settings.onclick=()=>{
+  if(!confirm("Reset all settings?"))return;
+  Object.keys(localStorage).forEach(k=>{
+    if(k.startsWith("s0lace")) localStorage.removeItem(k);
+  });
   location.reload();
-});
+};
 
-document.getElementById("btn-clear-media").addEventListener("click", () => {
+btn-clear-media.onclick=()=>{
   localStorage.removeItem("s0laceMediaCache");
   alert("Media cache cleared.");
-});
+};
 </script>
-
 </body>
 </html>
