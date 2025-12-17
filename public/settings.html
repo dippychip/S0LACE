@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S0LACE • Settings</title>
+  <title>Chips Cave • Settings</title>
 
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="stylesheet" href="index.css" />
@@ -67,11 +67,12 @@
 
 <body>
 <header class="site-header">
-  <div class="site-title">S0LACE</div>
+  <div class="site-title">Chips Cave</div>
   <nav class="site-nav">
     <a href="index.html">Home</a>
     <a href="games.html">Games</a>
     <a href="media.html">Media</a>
+    <a href="henry-wish.html">Henry's Wish</a>
     <a href="settings.html" class="active">Settings</a>
   </nav>
 </header>
@@ -170,13 +171,13 @@
 (function () {
   // Wait until DOM exists
   document.addEventListener("DOMContentLoaded", () => {
-    // Wait until global-hub has created window.S0LACE (because it's defer)
-    const waitForS0LACE = (tries = 0) => {
-      if (window.S0LACE) return init();
-      if (tries > 200) return console.error("S0LACE API never loaded (global-hub.js not running).");
-      setTimeout(() => waitForS0LACE(tries + 1), 25);
+    // Wait until global-hub has created window.ChipsCave (because it's defer)
+    const waitForChipsCave = (tries = 0) => {
+      if (window.ChipsCave) return init();
+      if (tries > 200) return console.error("ChipsCave API never loaded (global-hub.js not running).");
+      setTimeout(() => waitForChipsCave(tries + 1), 25);
     };
-    waitForS0LACE();
+    waitForChipsCave();
   });
 
   function init() {
@@ -211,7 +212,7 @@
 
     function applyCloak(cfg) {
       cfg.enabled = true;
-      window.S0LACE.applyTabCloak(cfg, true);
+      window.ChipsCave.applyTabCloak(cfg, true);
       localStorage.setItem("s0laceTabCloak", JSON.stringify(cfg));
     }
 
@@ -229,7 +230,7 @@
     });
 
     cloakReset.addEventListener("click", () => {
-      window.S0LACE.clearTabCloak(true);
+      window.ChipsCave.clearTabCloak(true);
       localStorage.removeItem("s0laceTabCloak");
       cloakSelect.value = "";
       cloakCustom.style.display = "none";
@@ -237,21 +238,21 @@
 
     /* ---------- APPEARANCE ---------- */
     themeSelect.addEventListener("change", e =>
-      window.S0LACE.applyTheme(e.target.value, true)
+      window.ChipsCave.applyTheme(e.target.value, true)
     );
 
     accentSelect.addEventListener("change", e =>
-      window.S0LACE.applyAccent(e.target.value, true)
+      window.ChipsCave.applyAccent(e.target.value, true)
     );
 
     /* ---------- BACKGROUND ---------- */
     bgMode.addEventListener("change", () => {
-      window.S0LACE.applyBackground(bgMode.value, bgUrl.value, true);
+      window.ChipsCave.applyBackground(bgMode.value, bgUrl.value, true);
     });
 
     bgUrl.addEventListener("blur", () => {
       if (bgMode.value === "custom") {
-        window.S0LACE.applyBackground("custom", bgUrl.value, true);
+        window.ChipsCave.applyBackground("custom", bgUrl.value, true);
       }
     });
 
@@ -259,7 +260,7 @@
     antiClose.checked = (localStorage.getItem("s0laceAntiClose") === "1");
 
     antiClose.addEventListener("change", e => {
-      e.target.checked ? window.S0LACE.enableAntiClose() : window.S0LACE.disableAntiClose();
+      e.target.checked ? window.ChipsCave.enableAntiClose() : window.ChipsCave.disableAntiClose();
     });
 
     blankBtn.addEventListener("click", () => {

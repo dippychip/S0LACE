@@ -1,5 +1,5 @@
 /* ================================
-   S0LACE ACCOUNT SYSTEM (LOCAL)
+   Chips Cave ACCOUNT SYSTEM (LOCAL)
    No email, no Firebase.
    Username + export/import profile.
 ================================ */

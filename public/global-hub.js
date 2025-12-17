@@ -40,7 +40,7 @@
   }
 
   function loadAccent() {
-    const key = localStorage.getItem(ACCENT_KEY) || "green";
+    const key = localStorage.getItem(ACCENT_KEY) || "violet";
     applyAccent(key, false);
     return key;
   }
@@ -90,7 +90,7 @@
   }
 
   function loadTheme() {
-    const t = localStorage.getItem(THEME_KEY) || "dark";
+    const t = localStorage.getItem(THEME_KEY) || "xmas";
     applyTheme(t, false);
     return t;
   }
@@ -217,7 +217,7 @@
       EXPORT API
      =========================================================== */
 
-  window.S0LACE = {
+  window.ChipsCave = {
     applyAccent,
     applyTabCloak,
     clearTabCloak,

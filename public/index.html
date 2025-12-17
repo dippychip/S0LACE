@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
-  <title>S0LACE</title>
+  <title>Chips Cave</title>
 
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="stylesheet" href="index.css" />
@@ -120,10 +120,50 @@
       color: var(--accent);
       text-shadow: 0 0 6px var(--accent);
     }
+
+    /* ===== CHRISTMAS SNOWFLAKES ===== */
+    .snowflake {
+      position: fixed;
+      color: #a855f7;
+      font-size: 1em;
+      font-family: Arial;
+      text-shadow: 0 0 5px #a855f7;
+      top: -10px;
+      animation: fall linear forwards;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh);
+      }
+    }
+
+    /* ===== CORNER TEXT ===== */
+    .corner-text {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 6px;
+      color: var(--fg-dim);
+      opacity: 0.6;
+      z-index: 999;
+      pointer-events: none;
+      text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+    }
+
   </style>
 </head>
 
 <body>
+
+<!-- Corner text -->
+<div class="corner-text">springmans never going to catch me</div>
+
+<!-- Christmas Snowflakes -->
+<div id="snowflakes-container"></div>
 
 <!-- Bottom icons -->
 <div id="bottom-icons">
@@ -132,11 +172,12 @@
 </div>
 
 <header class="site-header">
-  <div class="site-title">S0LACE</div>
+  <div class="site-title">Chips Cave</div>
   <nav class="site-nav">
     <a href="index.html" class="active">Home</a>
     <a href="games.html">Games</a>
     <a href="media.html">Media</a>
+    <a href="henry-wish.html">Henry's Wish</a>
     <a href="settings.html">Settings</a>
   </nav>
 </header>
@@ -145,7 +186,7 @@
 
   <section class="home-center">
     <div class="home-logo-title">
-      <div class="home-logo-mark">S0LACE</div>
+      <div class="home-logo-mark">Chips Cave</div>
       <div class="home-version">v1.0.5</div>
     </div>
 
@@ -198,7 +239,7 @@
 
       <a class="popular-pill" href="player.html?game=games/deadlydescent/index.html">
         <span class="pill-thumb" style="background-image:url('thumbs/deadlydescent.jpeg')"></span>
-        <span class="pill-name">Deadly Descentspan>
+        <span class="pill-name">Deadly Descent</span>
       </a>
 
       <a class="popular-pill" href="player.html?game=games/gladdihoppers.html">
@@ -244,7 +285,7 @@
 
       <a class="popular-pill" href="player.html?game=games/deadlydescent/index.html">
         <span class="pill-thumb" style="background-image:url('thumbs/deadlydescent.jpeg')"></span>
-        <span class="pill-name">Deadly Descentspan>
+        <span class="pill-name">Deadly Descent</span>
       </a>
 
       <a class="popular-pill" href="player.html?game=games/gladdihoppers.html">
@@ -373,6 +414,31 @@ if(!sessionStorage.getItem("s0lace-counted")){
   sessionStorage.setItem("s0lace-counted","1");
   updateCounters(true);
 }else updateCounters(false);
+</script>
+
+<!-- Snowflakes Animation -->
+<script>
+(function() {
+  const container = document.getElementById('snowflakes-container');
+  const snowflakes = ['❄', '❅', '❆'];
+  
+  function createSnowflake() {
+    const snowflake = document.createElement('div');
+    snowflake.className = 'snowflake';
+    snowflake.textContent = snowflakes[Math.floor(Math.random() * snowflakes.length)];
+    snowflake.style.left = Math.random() * 100 + '%';
+    snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+    snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    snowflake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+    container.appendChild(snowflake);
+    
+    setTimeout(() => {
+      snowflake.remove();
+    }, 5000);
+  }
+  
+  setInterval(createSnowflake, 300);
+})();
 </script>
 
 </body>
