@@ -1,17 +1,22 @@
-importScripts('/scram/scramjet.all.js');
+importScripts('/uv/uv.bundle.js');
 
-const { ScramjetServiceWorker } = $scramjetLoadWorker();
-const scramjet = new ScramjetServiceWorker();
+// Service worker config
+self.__uv$config = {
+    prefix: '/service/',
+    encodeUrl: Ultraviolet.codec.xor.encode,
+    decodeUrl: Ultraviolet.codec.xor.decode,
+    handler: '/uv/uv.handler.js',
+    client: '/uv/uv.client.js',
+    bundle: '/uv/uv.bundle.js',
+    config: '/uv/uv.config.js',
+    sw: '/uv/uv.sw.js',
+};
+
+importScripts(self.__uv$config.sw || '/uv/uv.sw.js');
+
+const uv = new UVServiceWorker();
 
 async function handleRequest(event) {
-  await scramjet.loadConfig();
-  if (scramjet.route(event)) {
-    return scramjet.fetch(event);
-  }
-  return fetch(event.request);
-}
-
-self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // let TMDB images go straight to the network (no proxy)
@@ -19,5 +24,13 @@ self.addEventListener('fetch', (event) => {
     return; // do NOT call respondWith -> browser handles normally
   }
 
+  if (uv.route(event)) {
+    return await uv.fetch(event);
+  }
+  
+  return await fetch(event.request);
+}
+
+self.addEventListener('fetch', (event) => {
   event.respondWith(handleRequest(event));
 });

@@ -44,6 +44,9 @@
           placeholder="search for your favorite games"
           autocomplete="off"
         />
+        <button id="random-game-btn" class="random-game-btn" title="Pick a random game">
+          🎲
+        </button>
       </div>
 
       <div class="game-grid" id="game-grid">
@@ -950,6 +953,17 @@
             <div class="game-overlay">Idle Breakout</div>
           </div>
         </a>
+
+        <a
+          class="game-card"
+          href="player.html?game=https://ubg98.github.io/MinecraftCaseSimulator/"
+          data-name="minecraft case simulator"
+        >
+          <div class="game-thumb">
+            <img src="thumbs/minecraft-case-simulator.avif" alt="Minecraft Case Simulator" />
+            <div class="game-overlay">Minecraft Case Simulator</div>
+          </div>
+        </a>
       </div>
 
       <div id="game-empty">No games match that search.</div>
@@ -1009,6 +1023,26 @@
 
       if (searchInput) {
         searchInput.addEventListener("input", filterGames);
+      }
+
+      // Random game button
+      const randomGameBtn = document.getElementById("random-game-btn");
+      if (randomGameBtn) {
+        randomGameBtn.addEventListener("click", () => {
+          // Filter out the "suggestions" card and any cards that are hidden
+          const playableGames = cards.filter(card => {
+            const name = (card.dataset.name || "").toLowerCase();
+            return name !== "suggestions" && card.style.display !== "none";
+          });
+
+          if (playableGames.length > 0) {
+            const randomIndex = Math.floor(Math.random() * playableGames.length);
+            const randomGame = playableGames[randomIndex];
+            if (randomGame && randomGame.href) {
+              window.location.href = randomGame.href;
+            }
+          }
+        });
       }
     </script>
   </body>
